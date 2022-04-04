@@ -1,6 +1,6 @@
 {
     "name": "secret-manager-crypto-utils",
-    "version": "0.0.8",
+    "version": "0.0.9",
     "description": "This is the shit!",
     "scripts": {
         "build-coffee": "coffee -o output/ -c sources/source/*/*.coffee",
