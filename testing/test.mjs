@@ -7,8 +7,7 @@ const results = {}
 
 const testString = "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^"
 
-const count = 1000
-
+const count = 100
 
 //############################################################
 async function testShas() {
@@ -196,12 +195,12 @@ async function testAsymetricEncryption() {
         var { secretKeyHex, publicKeyHex } = await secUtl.createKeyPairHex()
         var { secretKeyBytes, publicKeyBytes } = await secUtl.createKeyPairBytes()
         
-        var gibbrishHex = await secUtl.asymetricEncryptHex(testString, publicKeyHex)
-        var decrypted = await secUtl.asymetricDecryptHex(gibbrishHex, secretKeyHex)
+        var secretsObject = await secUtl.asymetricEncryptHex(testString, publicKeyHex)
+        var decrypted = await secUtl.asymetricDecryptHex(secretsObject, secretKeyHex)
         var hexMatched = decrypted == testString
-        
-        var gibbrishBytes = await secUtl.asymetricEncryptHex(testString, publicKeyBytes)
-        var decrypted = await secUtl.asymetricDecryptHex(gibbrishBytes, secretKeyBytes)
+
+        secretsObject = await secUtl.asymetricEncryptBytes(testString, publicKeyBytes)
+        decrypted = await secUtl.asymetricDecryptBytes(secretsObject, secretKeyBytes)
         var bytesMatched = decrypted == testString
         
 
@@ -217,19 +216,17 @@ async function testAsymetricEncryption() {
             c = count
             before = stamp()
             while(c--) {
-                gibbrishHex = await secUtl.asymetricEncryptHex(testString, publicKeyHex)
-                decrypted = await secUtl.asymetricDecryptHex(gibbrishHex, secretKeyHex)
+                secretsObject = await secUtl.asymetricEncryptHex(testString, publicKeyHex)
+                decrypted = await secUtl.asymetricDecryptHex(secretsObject, secretKeyHex)
             }
             after = stamp()
             hexMS = after - before
 
-
-
             c = count
             before = stamp()
             while(c--) {
-                gibbrishBytes = await secUtl.asymetricEncryptHex(testString, publicKeyBytes)
-                decrypted = await secUtl.asymetricDecryptHex(gibbrishBytes, secretKeyBytes)        
+                secretsObject = await secUtl.asymetricEncryptBytes(testString, publicKeyBytes)
+                decrypted = await secUtl.asymetricDecryptBytes(secretsObject, secretKeyBytes)        
             }
             after = stamp()
             bytesMS = after - before
@@ -252,7 +249,6 @@ async function testSalts() {
     try {
         var salt = await secUtl.createRandomLengthSalt()
         var saltedContent = salt+testString
-        console.log(saltedContent)
         var content = await secUtl.removeSalt(saltedContent)
         if(content == testString) {
             results.testSalts="success"
@@ -269,9 +265,9 @@ async function testSalts() {
 //############################################################
 async function runAllTest() {
     
-    // await testShas()
-    // await testSignatures()
-    // await testSymetricEncryption()
+    await testShas()
+    await testSignatures()
+    await testSymetricEncryption()
     await testAsymetricEncryption()
     await testSalts()
 
