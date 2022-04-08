@@ -1,48 +1,131 @@
 import * as secUtl from "../output/index.js"
+import { performance } from "perf_hooks"
+
+const stamp = performance.now
 
 const results = {}
 
-var testString = "test"
+const testString = "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^"
+
+const count = 1000
 
 
-
+//############################################################
 async function testShas() {
     try {
         var sha256Hex = await secUtl.sha256Hex(testString)
         var sha256Bytes = await secUtl.sha256Bytes(testString)    
-
-        console.log("hex sha256: "+sha256Hex)
-
-        var isMatch = sha256Hex == Buffer.from(sha256Bytes).toString("hex")
-    
-        if(isMatch) {
-            // console.log("Sha256 - hex matched the bytes version.")
-            results.testShas="success"
         
+        var sha512Hex = await secUtl.sha512Hex(testString)
+        var sha512Bytes = await secUtl.sha512Bytes(testString)    
+
+        var isMatch256 = sha256Hex == Buffer.from(sha256Bytes).toString("hex")
+        var isMatch512 = sha512Hex == Buffer.from(sha512Bytes).toString("hex")
+    
+        if(isMatch256 && isMatch512) {
+
+            let success = true
+            let sha256HexMS = 0
+            let sha256BytesMS = 0
+            let sha512HexMS = 0
+            let sha512BytesMS = 0
+            let before = 0
+            let after = 0
+            let c = 0
+            
+
+            c = count
+            before = stamp()
+            while(c--) {
+                sha512Hex = await secUtl.sha512Hex(testString)
+            }
+            after = stamp()
+            sha512HexMS = after - before
+
+            c = count
+            before = stamp()
+            while(c--) {
+                sha512Bytes = await secUtl.sha512Bytes(testString)
+            }
+            after = stamp()
+            sha512BytesMS = after - before
+
+
+            c = count
+            before = stamp()
+            while(c--) {
+                sha256Hex = await secUtl.sha256Hex(testString)
+            }
+            after = stamp()
+            sha256HexMS = after - before
+
+            c = count
+            before = stamp()
+            while(c--) {
+                sha256Bytes = await secUtl.sha256Bytes(testString)
+            }
+            after = stamp()
+            sha256BytesMS = after - before            
+
+
+            results.testShas = { success, sha256HexMS, sha256BytesMS, sha512HexMS, sha512BytesMS }
+    
         } else {
-            // console.log("Error! Hex did not match the bytes version.")
             results.testShas="Error! Hex did not match the bytes version."
         }
     
     } catch(error) {
         results.testShas=error.message
     }
-    
 }
 
+//############################################################
 async function testSignatures() {
 
     try {
-        var { secretKeyHex, publicKeyHex } = await secUtl.getNewKeyPair()
+        var { secretKeyBytes, publicKeyBytes } = await secUtl.createKeyPairBytes()
+        var { secretKeyHex, publicKeyHex } = await secUtl.createKeyPairHex()
 
-        var signatureHex = await secUtl.createSignature(testString, secretKeyHex)
-        var verified = await secUtl.verify(signatureHex, publicKeyHex, testString)
+        var signatureBytes = await secUtl.createSignatureBytes(testString, secretKeyBytes)
+        var verifiedBytes = await secUtl.verify(signatureBytes, publicKeyBytes, testString)
 
-        console.log(verified)
-        if(verified) {
-            results.testSignatures="success"
+        var signatureHex = await secUtl.createSignatureHex(testString, secretKeyHex)
+        var verifiedHex = await secUtl.verify(signatureHex, publicKeyHex, testString)
+
+        if(verifiedBytes && verifiedHex) {
+            let success = true
+            let hexMS = 0
+            let bytesMS = 0
+            let before = 0
+            let after = 0
+            let c = 0
+
+
+            c = count
+            before = stamp()
+            while(c--) {
+                signatureHex = await secUtl.createSignatureHex(testString, secretKeyHex)
+                verifiedHex = await secUtl.verify(signatureHex, publicKeyHex, testString)
+            }
+            after = stamp()
+            hexMS = after - before
+
+
+            c = count
+            before = stamp()
+            while(c--) {
+                signatureBytes = await secUtl.createSignatureBytes(testString, secretKeyBytes)
+                verifiedBytes = await secUtl.verify(signatureBytes, publicKeyBytes, testString)
+            }
+            after = stamp()
+            bytesMS = after - before
+
+
+            results.testSignatures= {success, hexMS, bytesMS}
+
         } else {
-            results.testSignatures="Error: Signature not verified"
+            let error =  "Error: Signature not verified"
+            results.testSignatures = {error, verifiedBytes, verifiedHex}
         }
 
     } catch(error) {
@@ -51,15 +134,119 @@ async function testSignatures() {
 
 }
 
-async function testAsyncEncryption() {
+//############################################################
+async function testSymetricEncryption() {
+
+    try {
+        var keyHex = await secUtl.createSymKeyHex()
+    
+        var gibbrishHex = await secUtl.symetricEncryptHex(testString, keyHex)    
+        var decrypted = await secUtl.symetricDecrypt(gibbrishHex, keyHex)
+        
+        var hexMatched = decrypted == testString
+
+        var keyBytes = await secUtl.createSymKeyBytes()
+        var gibbrishBytes = await secUtl.symetricEncryptBytes(testString, keyBytes)    
+        decrypted = await secUtl.symetricDecryptBytes(gibbrishBytes, keyBytes)
+
+        var bytesMatched = decrypted == testString
+
+        if(hexMatched && bytesMatched){
+            let success = true
+            let before
+            let after
+            let hexMS
+            let bytesMS
+            let c
+
+            c = count
+            before = stamp()
+            while(c--) {
+                gibbrishHex = await secUtl.symetricEncryptHex(testString, keyHex)
+                decrypted = await secUtl.symetricDecrypt(gibbrishHex, keyHex)
+            }
+            after = stamp()
+            hexMS = after - before
+
+            c = count
+            before = stamp()
+            while(c--) {
+                gibbrishBytes = await secUtl.symetricEncryptBytes(testString, keyBytes)    
+                decrypted = await secUtl.symetricDecryptBytes(gibbrishBytes, keyBytes)
+                    }
+            after = stamp()
+            bytesMS = after - before
+
+
+            results.testSymetricEncryption = {success, hexMS, bytesMS}
+        } else {
+            results.testSymetricEncryption = "Error: Decrypted did not match original content!"
+        }
+    } catch(error) {
+        results.testSymetricEncryption = error.message
+    }
+
 
 }
 
-async function testSyncEncryption() {
+//############################################################
+async function testAsymetricEncryption() {
 
+    try {
+        var { secretKeyHex, publicKeyHex } = await secUtl.createKeyPairHex()
+        var { secretKeyBytes, publicKeyBytes } = await secUtl.createKeyPairBytes()
+        
+        var gibbrishHex = await secUtl.asymetricEncryptHex(testString, publicKeyHex)
+        var decrypted = await secUtl.asymetricDecryptHex(gibbrishHex, secretKeyHex)
+        var hexMatched = decrypted == testString
+        
+        var gibbrishBytes = await secUtl.asymetricEncryptHex(testString, publicKeyBytes)
+        var decrypted = await secUtl.asymetricDecryptHex(gibbrishBytes, secretKeyBytes)
+        var bytesMatched = decrypted == testString
+        
+
+        if(hexMatched && bytesMatched){
+            let success = true
+            let before
+            let after
+            let hexMS
+            let bytesMS
+            let c
+
+
+            c = count
+            before = stamp()
+            while(c--) {
+                gibbrishHex = await secUtl.asymetricEncryptHex(testString, publicKeyHex)
+                decrypted = await secUtl.asymetricDecryptHex(gibbrishHex, secretKeyHex)
+            }
+            after = stamp()
+            hexMS = after - before
+
+
+
+            c = count
+            before = stamp()
+            while(c--) {
+                gibbrishBytes = await secUtl.asymetricEncryptHex(testString, publicKeyBytes)
+                decrypted = await secUtl.asymetricDecryptHex(gibbrishBytes, secretKeyBytes)        
+            }
+            after = stamp()
+            bytesMS = after - before
+
+
+            results.testAsymetricEncryption = {success, hexMS, bytesMS}
+        } else {
+            var error = "Error: Decrypted did not match original content!"
+            results.testAsymetricEncryption = {error, hexMatched, bytesMatched} 
+        }
+    } catch(error) {
+        results.testAsymetricEncryption = error.message
+    }
 
 }
 
+//############################################################
 async function testSalts() {
 
     try {
@@ -79,16 +266,14 @@ async function testSalts() {
 
 }
 
-
+//############################################################
 async function runAllTest() {
-    var promises = []
-    promises.push(testShas())
-    promises.push(testSignatures())
-    promises.push(testAsyncEncryption())
-    promises.push(testSyncEncryption())
-    promises.push(testSalts())
-
-    await Promise.all(promises)
+    
+    // await testShas()
+    // await testSignatures()
+    // await testSymetricEncryption()
+    await testAsymetricEncryption()
+    await testSalts()
 
     evaluate()
 }
