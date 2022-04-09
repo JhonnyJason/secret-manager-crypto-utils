@@ -134,19 +134,19 @@ async function testSignatures() {
 }
 
 //############################################################
-async function testSymetricEncryption() {
+async function testsymmetricEncryption() {
 
     try {
         var keyHex = await secUtl.createSymKeyHex()
     
-        var gibbrishHex = await secUtl.symetricEncryptHex(testString, keyHex)    
-        var decrypted = await secUtl.symetricDecrypt(gibbrishHex, keyHex)
+        var gibbrishHex = await secUtl.symmetricEncryptHex(testString, keyHex)    
+        var decrypted = await secUtl.symmetricDecrypt(gibbrishHex, keyHex)
         
         var hexMatched = decrypted == testString
 
         var keyBytes = await secUtl.createSymKeyBytes()
-        var gibbrishBytes = await secUtl.symetricEncryptBytes(testString, keyBytes)    
-        decrypted = await secUtl.symetricDecryptBytes(gibbrishBytes, keyBytes)
+        var gibbrishBytes = await secUtl.symmetricEncryptBytes(testString, keyBytes)    
+        decrypted = await secUtl.symmetricDecryptBytes(gibbrishBytes, keyBytes)
 
         var bytesMatched = decrypted == testString
 
@@ -161,8 +161,8 @@ async function testSymetricEncryption() {
             c = count
             before = stamp()
             while(c--) {
-                gibbrishHex = await secUtl.symetricEncryptHex(testString, keyHex)
-                decrypted = await secUtl.symetricDecrypt(gibbrishHex, keyHex)
+                gibbrishHex = await secUtl.symmetricEncryptHex(testString, keyHex)
+                decrypted = await secUtl.symmetricDecrypt(gibbrishHex, keyHex)
             }
             after = stamp()
             hexMS = after - before
@@ -170,39 +170,45 @@ async function testSymetricEncryption() {
             c = count
             before = stamp()
             while(c--) {
-                gibbrishBytes = await secUtl.symetricEncryptBytes(testString, keyBytes)    
-                decrypted = await secUtl.symetricDecryptBytes(gibbrishBytes, keyBytes)
+                gibbrishBytes = await secUtl.symmetricEncryptBytes(testString, keyBytes)    
+                decrypted = await secUtl.symmetricDecryptBytes(gibbrishBytes, keyBytes)
                     }
             after = stamp()
             bytesMS = after - before
 
 
-            results.testSymetricEncryption = {success, hexMS, bytesMS}
+            results.testsymmetricEncryption = {success, hexMS, bytesMS}
         } else {
-            results.testSymetricEncryption = "Error: Decrypted did not match original content!"
+            results.testsymmetricEncryption = "Error: Decrypted did not match original content!"
         }
     } catch(error) {
-        results.testSymetricEncryption = error.message
+        results.testsymmetricEncryption = error.message
     }
 
 
 }
 
 //############################################################
-async function testAsymetricEncryption() {
+async function testAsymmetricEncryption() {
 
     try {
         var { secretKeyHex, publicKeyHex } = await secUtl.createKeyPairHex()
         var { secretKeyBytes, publicKeyBytes } = await secUtl.createKeyPairBytes()
         
-        var secretsObject = await secUtl.asymetricEncryptHex(testString, publicKeyHex)
-        var decrypted = await secUtl.asymetricDecryptHex(secretsObject, secretKeyHex)
+        var secretsObject = await secUtl.asymmetricEncryptHex(testString, publicKeyHex)
+        var decrypted = await secUtl.asymmetricDecryptHex(secretsObject, secretKeyHex)
         var hexMatched = decrypted == testString
 
-        secretsObject = await secUtl.asymetricEncryptBytes(testString, publicKeyBytes)
-        decrypted = await secUtl.asymetricDecryptBytes(secretsObject, secretKeyBytes)
+        secretsObject = await secUtl.asymmetricEncryptBytes(testString, publicKeyBytes)
+        decrypted = await secUtl.asymmetricDecryptBytes(secretsObject, secretKeyBytes)
         var bytesMatched = decrypted == testString
-        
+
+        // secretsObject = await secUtl.asymmetricEncryptOld(testString, publicKeyHex)
+        // decrypted = await secUtl.asymmetricDecryptHex(secretsObject, secretKeyHex)
+        // console.log("hello 1! "+(decrypted == testString))
+        // secretsObject = await secUtl.asymmetricEncryptHex(testString, publicKeyHex)
+        // decrypted = await secUtl.asymmetricDecryptOld(secretsObject, secretKeyHex)
+        // console.log("hello 2! "+(decrypted == testString))
 
         if(hexMatched && bytesMatched){
             let success = true
@@ -216,8 +222,8 @@ async function testAsymetricEncryption() {
             c = count
             before = stamp()
             while(c--) {
-                secretsObject = await secUtl.asymetricEncryptHex(testString, publicKeyHex)
-                decrypted = await secUtl.asymetricDecryptHex(secretsObject, secretKeyHex)
+                secretsObject = await secUtl.asymmetricEncryptHex(testString, publicKeyHex)
+                decrypted = await secUtl.asymmetricDecryptHex(secretsObject, secretKeyHex)
             }
             after = stamp()
             hexMS = after - before
@@ -225,20 +231,20 @@ async function testAsymetricEncryption() {
             c = count
             before = stamp()
             while(c--) {
-                secretsObject = await secUtl.asymetricEncryptBytes(testString, publicKeyBytes)
-                decrypted = await secUtl.asymetricDecryptBytes(secretsObject, secretKeyBytes)        
+                secretsObject = await secUtl.asymmetricEncryptBytes(testString, publicKeyBytes)
+                decrypted = await secUtl.asymmetricDecryptBytes(secretsObject, secretKeyBytes)        
             }
             after = stamp()
             bytesMS = after - before
 
 
-            results.testAsymetricEncryption = {success, hexMS, bytesMS}
+            results.testAsymmetricEncryption = {success, hexMS, bytesMS}
         } else {
             var error = "Error: Decrypted did not match original content!"
-            results.testAsymetricEncryption = {error, hexMatched, bytesMatched} 
+            results.testAsymmetricEncryption = {error, hexMatched, bytesMatched} 
         }
     } catch(error) {
-        results.testAsymetricEncryption = error.message
+        results.testAsymmetricEncryption = error.message
     }
 
 }
@@ -267,8 +273,8 @@ async function runAllTest() {
     
     await testShas()
     await testSignatures()
-    await testSymetricEncryption()
-    await testAsymetricEncryption()
+    await testsymmetricEncryption()
+    await testAsymmetricEncryption()
     await testSalts()
 
     evaluate()
