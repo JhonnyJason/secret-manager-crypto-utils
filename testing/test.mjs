@@ -82,10 +82,10 @@ async function testPublicKey() {
     try {
         var keyPairHex = await secUtl.createKeyPairHex()
         var keyPairBytes = await secUtl.createKeyPairBytes()
-        console.log(JSON.stringify(keyPairHex, null, 4))
-        console.log(JSON.stringify(keyPairBytes, null, 4))
-        var pubHex = await secUtl.publicKeyHex(keyPairHex.secretKeyHex)
-        var pubBytes = await secUtl.publicKeyBytes(keyPairBytes.secretKeyBytes)
+        // console.log(JSON.stringify(keyPairHex, null, 4))
+        // console.log(JSON.stringify(keyPairBytes, null, 4))
+        var pubHex = await secUtl.createPublicKeyHex(keyPairHex.secretKeyHex)
+        var pubBytes = await secUtl.createPublicKeyBytes(keyPairBytes.secretKeyBytes)
 
         var isMatchHex = keyPairHex.publicKeyHex == pubHex
         var isMatchBytes = JSON.stringify(keyPairBytes.publicKeyBytes) == JSON.stringify(pubBytes)
@@ -103,7 +103,7 @@ async function testPublicKey() {
             c = count
             before = stamp()
             while(c--) {
-                pubHex = await secUtl.publicKeyHex(keyPairHex.secretKeyHex)
+                pubHex = await secUtl.createPublicKeyHex(keyPairHex.secretKeyHex)
             }
             after = stamp()
             hexMS = after - before
@@ -111,7 +111,7 @@ async function testPublicKey() {
             c = count
             before = stamp()
             while(c--) {
-                pubBytes = await secUtl.publicKeyBytes(keyPairBytes.secretKeyBytes)
+                pubBytes = await secUtl.createPublicKeyBytes(keyPairBytes.secretKeyBytes)
             }
             after = stamp()
             bytesMS = after - before            
