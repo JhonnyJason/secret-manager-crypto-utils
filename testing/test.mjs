@@ -1,13 +1,11 @@
 import * as secUtl from "../output/index.js"
 import { performance } from "perf_hooks"
 
-const stamp = performance.now
-
 const results = {}
 
 const testString = "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^"
 
-const count = 100
+const count = 1000
 
 //############################################################
 async function testShas() {
@@ -34,36 +32,36 @@ async function testShas() {
             
 
             c = count
-            before = stamp()
+            before = performance.now()
             while(c--) {
                 sha512Hex = await secUtl.sha512Hex(testString)
             }
-            after = stamp()
+            after = performance.now()
             sha512HexMS = after - before
 
             c = count
-            before = stamp()
+            before = performance.now()
             while(c--) {
                 sha512Bytes = await secUtl.sha512Bytes(testString)
             }
-            after = stamp()
+            after = performance.now()
             sha512BytesMS = after - before
 
 
             c = count
-            before = stamp()
+            before = performance.now()
             while(c--) {
                 sha256Hex = await secUtl.sha256Hex(testString)
             }
-            after = stamp()
+            after = performance.now()
             sha256HexMS = after - before
 
             c = count
-            before = stamp()
+            before = performance.now()
             while(c--) {
                 sha256Bytes = await secUtl.sha256Bytes(testString)
             }
-            after = stamp()
+            after = performance.now()
             sha256BytesMS = after - before            
 
 
@@ -101,19 +99,19 @@ async function testPublicKey() {
             
 
             c = count
-            before = stamp()
+            before = performance.now()
             while(c--) {
                 pubHex = await secUtl.createPublicKeyHex(keyPairHex.secretKeyHex)
             }
-            after = stamp()
+            after = performance.now()
             hexMS = after - before
 
             c = count
-            before = stamp()
+            before = performance.now()
             while(c--) {
                 pubBytes = await secUtl.createPublicKeyBytes(keyPairBytes.secretKeyBytes)
             }
-            after = stamp()
+            after = performance.now()
             bytesMS = after - before            
 
             results.testPublicKey = { success, bytesMS, hexMS }
@@ -150,22 +148,22 @@ async function testSignatures() {
 
 
             c = count
-            before = stamp()
+            before = performance.now()
             while(c--) {
                 signatureHex = await secUtl.createSignatureHex(testString, secretKeyHex)
                 verifiedHex = await secUtl.verify(signatureHex, publicKeyHex, testString)
             }
-            after = stamp()
+            after = performance.now()
             hexMS = after - before
 
 
             c = count
-            before = stamp()
+            before = performance.now()
             while(c--) {
                 signatureBytes = await secUtl.createSignatureBytes(testString, secretKeyBytes)
                 verifiedBytes = await secUtl.verify(signatureBytes, publicKeyBytes, testString)
             }
-            after = stamp()
+            after = performance.now()
             bytesMS = after - before
 
 
@@ -183,7 +181,7 @@ async function testSignatures() {
 }
 
 //############################################################
-async function testsymmetricEncryption() {
+async function testSymmetricEncryption() {
 
     try {
         var keyHex = await secUtl.createSymKeyHex()
@@ -208,30 +206,30 @@ async function testsymmetricEncryption() {
             let c
 
             c = count
-            before = stamp()
+            before = performance.now()
             while(c--) {
                 gibbrishHex = await secUtl.symmetricEncryptHex(testString, keyHex)
                 decrypted = await secUtl.symmetricDecrypt(gibbrishHex, keyHex)
             }
-            after = stamp()
+            after = performance.now()
             hexMS = after - before
 
             c = count
-            before = stamp()
+            before = performance.now()
             while(c--) {
                 gibbrishBytes = await secUtl.symmetricEncryptBytes(testString, keyBytes)    
                 decrypted = await secUtl.symmetricDecryptBytes(gibbrishBytes, keyBytes)
                     }
-            after = stamp()
+            after = performance.now()
             bytesMS = after - before
 
 
-            results.testsymmetricEncryption = {success, hexMS, bytesMS}
+            results.testSymmetricEncryption = {success, hexMS, bytesMS}
         } else {
-            results.testsymmetricEncryption = "Error: Decrypted did not match original content!"
+            results.testSymmetricEncryption = "Error: Decrypted did not match original content!"
         }
     } catch(error) {
-        results.testsymmetricEncryption = error.message
+        results.testSymmetricEncryption = error.message
     }
 
 
@@ -269,21 +267,21 @@ async function testAsymmetricEncryption() {
 
 
             c = count
-            before = stamp()
+            before = performance.now()
             while(c--) {
                 secretsObject = await secUtl.asymmetricEncryptHex(testString, publicKeyHex)
                 decrypted = await secUtl.asymmetricDecryptHex(secretsObject, secretKeyHex)
             }
-            after = stamp()
+            after = performance.now()
             hexMS = after - before
 
             c = count
-            before = stamp()
+            before = performance.now()
             while(c--) {
                 secretsObject = await secUtl.asymmetricEncryptBytes(testString, publicKeyBytes)
                 decrypted = await secUtl.asymmetricDecryptBytes(secretsObject, secretKeyBytes)        
             }
-            after = stamp()
+            after = performance.now()
             bytesMS = after - before
 
 
@@ -294,6 +292,468 @@ async function testAsymmetricEncryption() {
         }
     } catch(error) {
         results.testAsymmetricEncryption = error.message
+    }
+
+}
+
+//############################################################
+async function testCreateSharedSecretContexedHash512() {
+
+    try {
+        var kp = await secUtl.createKeyPairHex()
+        var alicePriv = kp.secretKeyHex
+        var alicePub = kp.publicKeyHex
+        kp = await secUtl.createKeyPairHex()
+        var bobPriv = kp.secretKeyHex
+        var bobPub = kp.publicKeyHex
+        
+        var context = "test.extensivlyon.coffee/ultra-context"
+
+        var sharedSecretAlice = await secUtl.createSharedSecretContexedHash512(alicePriv, bobPub, context)
+        var sharedSecretBob = await secUtl.createSharedSecretContexedHash512(bobPriv, alicePub, context)
+        
+        if(sharedSecretAlice == sharedSecretBob) {
+            let success = true
+            let before
+            let after
+            let hexMS
+            let bytesMS
+            let c
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                sharedSecretAlice = await secUtl.createSharedSecretContexedHash512(alicePriv, bobPub, context)
+                sharedSecretBob = await secUtl.createSharedSecretContexedHash512(bobPriv, alicePub, context)
+            }
+            after = performance.now()
+            hexMS = after - before
+
+            bytesMS = 9001
+            results.testCreateSharedSecretContexedHash512 = {success, hexMS, bytesMS}
+        } else {
+            var error = "Error: created shared secrets did not match!"
+            results.testCreateSharedSecretContexedHash512 = {error, sharedSecretAlice, sharedSecretBob} 
+        }
+    } catch(error) {
+        results.testCreateSharedSecretContexedHash512 = error.message
+    }
+
+}
+
+//############################################################
+async function testCreateSharedSecretHash512() {
+
+    try {
+        var kp = await secUtl.createKeyPairHex()
+        var alicePriv = kp.secretKeyHex
+        var alicePub = kp.publicKeyHex
+        kp = await secUtl.createKeyPairHex()
+        var bobPriv = kp.secretKeyHex
+        var bobPub = kp.publicKeyHex
+        
+
+        var sharedSecretAlice = await secUtl.createSharedSecretHash512(alicePriv, bobPub)
+
+        var sharedSecretBob = await secUtl.createSharedSecretHash512(bobPriv, alicePub)
+        
+        if(sharedSecretAlice == sharedSecretBob) {
+            let success = true
+            let before
+            let after
+            let hexMS
+            let bytesMS
+            let c
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                sharedSecretAlice = await secUtl.createSharedSecretHash512(alicePriv, bobPub)
+                sharedSecretBob = await secUtl.createSharedSecretHash512(bobPriv, alicePub)
+            }
+            after = performance.now()
+            hexMS = after - before
+
+            bytesMS = 9001
+            results.createSharedSecretHash512 = {success, hexMS, bytesMS}
+        } else {
+            var error = "Error: shared secrets did not match!"
+            results.createSharedSecretHash512 = {error, sharedSecretAlice, sharedSecretBob} 
+        }
+    } catch(error) {
+        results.createSharedSecretHash512 = error.message
+    }
+
+}
+
+//############################################################
+async function testReferencedSharedSecretContexedHash512() {
+
+    try {
+        var kp = await secUtl.createKeyPairHex()
+        var alicePriv = kp.secretKeyHex
+        var alicePub = kp.publicKeyHex
+        kp = await secUtl.createKeyPairHex()
+        var bobPriv = kp.secretKeyHex
+        var bobPub = kp.publicKeyHex
+        
+        var context = "test.extensivlyon.coffee/ultra-context"
+
+        var referencedSharedSecret = await secUtl.referencedSharedSecretContexedHash512(bobPub, context)
+        var referencePoint = referencedSharedSecret.referencePointHex
+        var sharedSecretAlice = referencedSharedSecret.sharedSecretHex
+    
+        var sharedSecretBob = await secUtl.createSharedSecretContexedHash512(bobPriv, referencePoint, context)
+
+        if(sharedSecretAlice == sharedSecretBob) {
+            let success = true
+            let before
+            let after
+            let hexMS
+            let bytesMS
+            let c
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                referencedSharedSecret = await secUtl.referencedSharedSecretContexedHash512(bobPub, context)
+                referencedSharedSecret = await secUtl.referencedSharedSecretContexedHash512(alicePub, context)
+            }
+            after = performance.now()
+            hexMS = after - before
+
+            bytesMS = 9001
+            results.referencedSharedSecretContexedHash512 = {success, hexMS, bytesMS}
+        } else {
+            var error = "Error: referenced shared secret did not match!"
+            results.referencedSharedSecretContexedHash512 = {error, sharedSecretAlice, sharedSecretBob} 
+        }
+    } catch(error) {
+        results.referencedSharedSecretContexedHash512 = error.message
+    }
+
+}
+
+//############################################################
+async function testReferencedSharedSecretHash512() {
+
+    try {
+        var kp = await secUtl.createKeyPairHex()
+        var alicePriv = kp.secretKeyHex
+        var alicePub = kp.publicKeyHex
+        kp = await secUtl.createKeyPairHex()
+        var bobPriv = kp.secretKeyHex
+        var bobPub = kp.publicKeyHex
+        
+        var referencedSharedSecret = await secUtl.referencedSharedSecretHash512(bobPub)
+        var referencePoint = referencedSharedSecret.referencePointHex
+        var sharedSecretAlice = referencedSharedSecret.sharedSecretHex
+    
+        var sharedSecretBob = await secUtl.createSharedSecretHash512(bobPriv, referencePoint)
+
+        if(sharedSecretAlice == sharedSecretBob) {
+            let success = true
+            let before
+            let after
+            let hexMS
+            let bytesMS
+            let c
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                referencedSharedSecret = await secUtl.referencedSharedSecretHash512(bobPub)
+                referencePoint = referencedSharedSecret.referencePointHex
+                sharedSecretBob = await secUtl.createSharedSecretHash512(bobPriv, referencePoint)
+            }
+            after = performance.now()
+            hexMS = after - before
+
+            bytesMS = 9001
+            results.referencedSharedSecretHash512 = {success, hexMS, bytesMS}
+        } else {
+            var error = "Error: referenced shared secret did not match!"
+            results.referencedSharedSecretHash512 = {error, sharedSecretAlice, sharedSecretBob} 
+        }
+    } catch(error) {
+        results.referencedSharedSecretHash512 = error.message
+    }
+
+}
+
+//############################################################
+async function testCreateSharedSecretContexedHash256() {
+
+    try {
+        var kp = await secUtl.createKeyPairHex()
+        var alicePriv = kp.secretKeyHex
+        var alicePub = kp.publicKeyHex
+        kp = await secUtl.createKeyPairHex()
+        var bobPriv = kp.secretKeyHex
+        var bobPub = kp.publicKeyHex
+        
+        var context = "test.extensivlyon.coffee/ultra-context"
+
+        var sharedSecretAlice = await secUtl.createSharedSecretContexedHash256(alicePriv, bobPub, context)
+        var sharedSecretBob = await secUtl.createSharedSecretContexedHash256(bobPriv, alicePub, context)
+        
+        if(sharedSecretAlice == sharedSecretBob) {
+            let success = true
+            let before
+            let after
+            let hexMS
+            let bytesMS
+            let c
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                sharedSecretAlice = await secUtl.createSharedSecretContexedHash256(alicePriv, bobPub, context)
+                sharedSecretBob = await secUtl.createSharedSecretContexedHash256(bobPriv, alicePub, context)
+            }
+            after = performance.now()
+            hexMS = after - before
+
+            bytesMS = 9001
+            results.testCreateSharedSecretContexedHash256 = {success, hexMS, bytesMS}
+        } else {
+            var error = "Error: created shared secrets did not match!"
+            results.testCreateSharedSecretContexedHash256 = {error, sharedSecretAlice, sharedSecretBob} 
+        }
+    } catch(error) {
+        results.testCreateSharedSecretContexedHash256 = error.message
+    }
+
+}
+
+//############################################################
+async function testCreateSharedSecretHash256() {
+
+    try {
+        var kp = await secUtl.createKeyPairHex()
+        var alicePriv = kp.secretKeyHex
+        var alicePub = kp.publicKeyHex
+        kp = await secUtl.createKeyPairHex()
+        var bobPriv = kp.secretKeyHex
+        var bobPub = kp.publicKeyHex
+        
+
+        var sharedSecretAlice = await secUtl.createSharedSecretHash256(alicePriv, bobPub)
+
+        var sharedSecretBob = await secUtl.createSharedSecretHash256(bobPriv, alicePub)
+        
+        if(sharedSecretAlice == sharedSecretBob) {
+            let success = true
+            let before
+            let after
+            let hexMS
+            let bytesMS
+            let c
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                sharedSecretAlice = await secUtl.createSharedSecretHash256(alicePriv, bobPub)
+                sharedSecretBob = await secUtl.createSharedSecretHash256(bobPriv, alicePub)
+            }
+            after = performance.now()
+            hexMS = after - before
+
+            bytesMS = 9001
+            results.createSharedSecretHash256 = {success, hexMS, bytesMS}
+        } else {
+            var error = "Error: shared secrets did not match!"
+            results.createSharedSecretHash256 = {error, sharedSecretAlice, sharedSecretBob} 
+        }
+    } catch(error) {
+        results.createSharedSecretHash256 = error.message
+    }
+
+}
+
+//############################################################
+async function testCreateSharedSecretRaw() {
+
+    try {
+        var kp = await secUtl.createKeyPairHex()
+        var alicePriv = kp.secretKeyHex
+        var alicePub = kp.publicKeyHex
+        kp = await secUtl.createKeyPairHex()
+        var bobPriv = kp.secretKeyHex
+        var bobPub = kp.publicKeyHex
+        
+
+        var sharedSecretAlice = await secUtl.createSharedSecretRaw(alicePriv, bobPub)
+
+        var sharedSecretBob = await secUtl.createSharedSecretRaw(bobPriv, alicePub)
+        
+        if(sharedSecretAlice == sharedSecretBob) {
+            let success = true
+            let before
+            let after
+            let hexMS
+            let bytesMS
+            let c
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                sharedSecretAlice = await secUtl.createSharedSecretRaw(alicePriv, bobPub)
+                sharedSecretBob = await secUtl.createSharedSecretRaw(bobPriv, alicePub)
+            }
+            after = performance.now()
+            hexMS = after - before
+
+            bytesMS = 9001
+            results.createSharedSecretRaw = {success, hexMS, bytesMS}
+        } else {
+            var error = "Error: shared secrets did not match!"
+            results.createSharedSecretRaw = {error, sharedSecretAlice, sharedSecretBob} 
+        }
+    } catch(error) {
+        results.createSharedSecretRaw = error.message
+    }
+
+}
+
+//############################################################
+async function testReferencedSharedSecretContexedHash256() {
+
+    try {
+        var kp = await secUtl.createKeyPairHex()
+        var alicePriv = kp.secretKeyHex
+        var alicePub = kp.publicKeyHex
+        kp = await secUtl.createKeyPairHex()
+        var bobPriv = kp.secretKeyHex
+        var bobPub = kp.publicKeyHex
+        
+        var context = "test.extensivlyon.coffee/ultra-context"
+
+        var referencedSharedSecret = await secUtl.referencedSharedSecretContexedHash256(bobPub, context)
+        var referencePoint = referencedSharedSecret.referencePointHex
+        var sharedSecretAlice = referencedSharedSecret.sharedSecretHex
+    
+        var sharedSecretBob = await secUtl.createSharedSecretContexedHash256(bobPriv, referencePoint, context)
+
+        if(sharedSecretAlice == sharedSecretBob) {
+            let success = true
+            let before
+            let after
+            let hexMS
+            let bytesMS
+            let c
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                referencedSharedSecret = await secUtl.referencedSharedSecretContexedHash256(bobPub, context)
+                referencedSharedSecret = await secUtl.referencedSharedSecretContexedHash256(alicePub, context)
+            }
+            after = performance.now()
+            hexMS = after - before
+
+            bytesMS = 9001
+            results.referencedSharedSecretContexedHash256 = {success, hexMS, bytesMS}
+        } else {
+            var error = "Error: referenced shared secret did not match!"
+            results.referencedSharedSecretContexedHash256 = {error, sharedSecretAlice, sharedSecretBob} 
+        }
+    } catch(error) {
+        results.referencedSharedSecretContexedHash256 = error.message
+    }
+
+}
+
+//############################################################
+async function testReferencedSharedSecretHash256() {
+
+    try {
+        var kp = await secUtl.createKeyPairHex()
+        var alicePriv = kp.secretKeyHex
+        var alicePub = kp.publicKeyHex
+        kp = await secUtl.createKeyPairHex()
+        var bobPriv = kp.secretKeyHex
+        var bobPub = kp.publicKeyHex
+        
+        var referencedSharedSecret = await secUtl.referencedSharedSecretHash256(bobPub)
+        var referencePoint = referencedSharedSecret.referencePointHex
+        var sharedSecretAlice = referencedSharedSecret.sharedSecretHex
+    
+        var sharedSecretBob = await secUtl.createSharedSecretHash256(bobPriv, referencePoint)
+
+        if(sharedSecretAlice == sharedSecretBob) {
+            let success = true
+            let before
+            let after
+            let hexMS
+            let bytesMS
+            let c
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                referencedSharedSecret = await secUtl.referencedSharedSecretHash256(bobPub)
+                referencePoint = referencedSharedSecret.referencePointHex
+                sharedSecretBob = await secUtl.createSharedSecretHash256(bobPriv, referencePoint)
+            }
+            after = performance.now()
+            hexMS = after - before
+
+            bytesMS = 9001
+            results.referencedSharedSecretHash256 = {success, hexMS, bytesMS}
+        } else {
+            var error = "Error: referenced shared secret did not match!"
+            results.referencedSharedSecretHash256 = {error, sharedSecretAlice, sharedSecretBob} 
+        }
+    } catch(error) {
+        results.referencedSharedSecretHash256 = error.message
+    }
+
+}
+
+//############################################################
+async function testReferencedSharedSecretRaw() {
+
+    try {
+        var kp = await secUtl.createKeyPairHex()
+        var alicePriv = kp.secretKeyHex
+        var alicePub = kp.publicKeyHex
+        kp = await secUtl.createKeyPairHex()
+        var bobPriv = kp.secretKeyHex
+        var bobPub = kp.publicKeyHex
+        
+        var referencedSharedSecret = await secUtl.referencedSharedSecretRaw(bobPub)
+        var referencePoint = referencedSharedSecret.referencePointHex
+        var sharedSecretAlice = referencedSharedSecret.sharedSecretHex
+    
+        var sharedSecretBob = await secUtl.createSharedSecretRaw(bobPriv, referencePoint)
+
+        if(sharedSecretAlice == sharedSecretBob) {
+            let success = true
+            let before
+            let after
+            let hexMS
+            let bytesMS
+            let c
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                referencedSharedSecret = await secUtl.referencedSharedSecretRaw(bobPub)
+                referencePoint = referencedSharedSecret.referencePointHex
+                sharedSecretBob = await secUtl.createSharedSecretRaw(bobPriv, referencePoint)
+            }
+            after = performance.now()
+            hexMS = after - before
+
+            bytesMS = 9001
+            results.referencedSharedSecretRaw = {success, hexMS, bytesMS}
+        } else {
+            var error = "Error: referenced shared secret did not match!"
+            results.referencedSharedSecretRaw = {error, sharedSecretAlice, sharedSecretBob} 
+        }
+    } catch(error) {
+        results.referencedSharedSecretRaw = error.message
     }
 
 }
@@ -319,13 +779,26 @@ async function testSalts() {
 
 //############################################################
 async function runAllTest() {
-    
+
     await testShas()
-    await testPublicKey()
-    await testSignatures()
-    await testsymmetricEncryption()
+    // await testPublicKey()
+    // await testSignatures()
+    await testSymmetricEncryption()
     await testAsymmetricEncryption()
-    await testSalts()
+    
+    // await testCreateSharedSecretContexedHash512()
+    // await testCreateSharedSecretContexedHash256()
+    await testCreateSharedSecretHash512()
+    await testCreateSharedSecretHash256()
+    await testCreateSharedSecretRaw()
+
+    // await testReferencedSharedSecretContexedHash512()
+    // await testReferencedSharedSecretContexedHash256()
+    await testReferencedSharedSecretHash512()
+    await testReferencedSharedSecretHash256()
+    await testReferencedSharedSecretRaw()
+
+    // await testSalts()
 
     evaluate()
 }
