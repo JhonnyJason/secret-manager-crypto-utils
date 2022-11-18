@@ -6,7 +6,7 @@ const results = {}
 
 const testString = "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^"
 
-const count = 1000
+const count = 100
 
 //############################################################
 async function testShas() {
@@ -712,6 +712,7 @@ async function runAllTest() {
     await testReferencedSharedSecretRaw()
 
     evaluate()
+
 }
 
 function evaluate() {
