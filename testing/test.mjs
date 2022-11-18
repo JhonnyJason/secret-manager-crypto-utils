@@ -1,6 +1,5 @@
 import * as secUtl from "../output/index.js"
 import { performance } from "perf_hooks"
-import { request } from "http"
 
 const results = {}
 
@@ -317,124 +316,6 @@ async function testSalts() {
 }
 
 
-
-
-//############################################################
-async function testAuthCode() {
-
-    try {
-        var request1 = {publicKey: "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",timestamp: 0, nonce: 0, signature: "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}
-        var request2 = {authCode: "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",timestamp: 0, data:  "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}
-
-        var kpHex = await secUtl.createKeyPairHex()
-        var alicePrivHex = kpHex.secretKeyHex
-        var alicePubHex = kpHex.publicKeyHex
-
-        var context = "lenny@extensivlyon.coffee/mega-context"
-
-        var seedHex = await secUtl.createSharedSecretHashHex(alicePrivHex, alicePubHex, context)
-        var seedBytes = Buffer.from(seedHex, "hex")
-        var authCodeHex = await secUtl.authCodeHex(seedHex, request1)
-        var authCodeBytes = await secUtl.authCodeBytes(seedBytes, request1)
-        if(authCodeHex != (Buffer.from(authCodeBytes)).toString("hex")) {
-            throw new Error("Byte version and Hex version did not match!")
-        }
-
-        let success = true
-        let hexMS = 0
-        let bytesMS = 0
-        let before = 0
-        let after = 0
-        let c = 0
-
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            authCodeHex = secUtl.authCode(seedHex, request2)
-        }
-        after = performance.now()
-        hexMS = after - before
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            authCodeBytes = secUtl.authCodeBytes(seedHex, request2)
-        }
-        after = performance.now()
-        bytesMS = after - before
-
-
-        results.testAuthCode= {success, hexMS, bytesMS}
-
-    } catch(error) {
-        results.testAuthCode=error.message
-    }
-
-}
-
-//############################################################
-async function testSessionKey() {
-
-    try {
-        var request1 = {publicKey: "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",timestamp: 0, nonce: 0, signature: "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}
-        var request2 = {authCode: "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",timestamp: 0, data:  "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}
-
-        var kpHex = await secUtl.createKeyPairHex()
-        var alicePrivHex = kpHex.secretKeyHex
-        var alicePubHex = kpHex.publicKeyHex
-
-        var context = "lenny@extensivlyon.coffee/mega-context"
-
-        var seedHex = await secUtl.createSharedSecretHashHex(alicePrivHex, alicePubHex, context)
-        var seedBytes = Buffer.from(seedHex, "hex")
-        var sessionKeyHex = await secUtl.sessionKeyHex(seedHex, request1)
-        var sessionKeyBytes = await secUtl.sessionKeyBytes(seedBytes, request1)
-        if(sessionKeyHex != (Buffer.from(sessionKeyBytes)).toString("hex")) {
-            throw new Error("Byte version and Hex version did not match!")
-        }
-
-        var testCipher = await secUtl.symmetricEncrypt(testString, sessionKeyHex)
-        // var testUncipher = await secUtl.symmetricDecryptBytes(testCipher, sessionKeyBytes)
-        var testUncipher = await secUtl.symmetricDecrypt(testCipher, sessionKeyHex)
-        
-        if(testUncipher != testString) {
-            throw new Error("encyption and decryption of testString did not work with our sessionKey!")
-        }
-
-        let success = true
-        let hexMS = 0
-        let bytesMS = 0
-        let before = 0
-        let after = 0
-        let c = 0
-
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            sessionKeyHex = await secUtl.sessionKeyHex(seedHex, request2)
-        }
-        after = performance.now()
-        hexMS = after - before
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            sessionKeyBytes = await secUtl.sessionKeyBytes(seedBytes, request2)
-        }
-        after = performance.now()
-        bytesMS = after - before
-
-
-        results.testSessionKey= {success, hexMS, bytesMS}
-
-    } catch(error) {
-        results.testSessionKey=error.message
-    }
-
-}
-
 //############################################################
 async function testCreateSharedSecretHash() {
 
@@ -702,14 +583,13 @@ async function runAllTest() {
     await testSignatures()
     await testSymmetricEncryption()
     await testAsymmetricEncryption()    
-    await testSalts()
 
-    await testAuthCode()
-    await testSessionKey()
     await testCreateSharedSecretHash()
     await testCreateSharedSecretRaw()
     await testReferencedSharedSecretHash()
     await testReferencedSharedSecretRaw()
+
+    await testSalts()
 
     evaluate()
 
