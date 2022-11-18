@@ -182,49 +182,142 @@ async function testSignatures() {
 }
 
 //############################################################
-async function testContextId() {
+async function testSymmetricEncryption() {
 
     try {
-
-        var kpHex = await secUtl.createKeyPairHex()
-        var aliceId = kpHex.publicKeyHex
-
-        var context = "lenny@extensivlyon.coffee/mega-context"
-
-        var contextId = await secUtl.contextId(aliceId, context)
-        // console.log("contextId: "+contextId)        
+        var keyHex = await secUtl.createSymKeyHex()
+    
+        var gibbrishHex = await secUtl.symmetricEncryptHex(testString, keyHex)    
+        var decrypted = await secUtl.symmetricDecrypt(gibbrishHex, keyHex)
         
-        let success = true
-        let hexMS = 0
-        let bytesMS = 0
-        let before = 0
-        let after = 0
-        let c = 0
+        var hexMatched = decrypted == testString
 
-        c = count
-        before = performance.now()
-        while(c--) {
-            contextId = secUtl.contextId(aliceId, context)
+        var keyBytes = await secUtl.createSymKeyBytes()
+        var gibbrishBytes = await secUtl.symmetricEncryptBytes(testString, keyBytes)    
+        decrypted = await secUtl.symmetricDecryptBytes(gibbrishBytes, keyBytes)
+
+        var bytesMatched = decrypted == testString
+
+        if(hexMatched && bytesMatched){
+            let success = true
+            let before
+            let after
+            let hexMS
+            let bytesMS
+            let c
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                gibbrishHex = await secUtl.symmetricEncryptHex(testString, keyHex)
+                decrypted = await secUtl.symmetricDecrypt(gibbrishHex, keyHex)
+            }
+            after = performance.now()
+            hexMS = after - before
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                gibbrishBytes = await secUtl.symmetricEncryptBytes(testString, keyBytes)    
+                decrypted = await secUtl.symmetricDecryptBytes(gibbrishBytes, keyBytes)
+                    }
+            after = performance.now()
+            bytesMS = after - before
+
+
+            results.testSymmetricEncryption = {success, hexMS, bytesMS}
+        } else {
+            results.testSymmetricEncryption = "Error: Decrypted did not match original content!"
         }
-        after = performance.now()
-        hexMS = after - before
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            contextId = secUtl.contextIdBytes(aliceId, context)
-        }
-        after = performance.now()
-        bytesMS = after - before
-
-
-        results.testContextId= {success, hexMS, bytesMS}
-
     } catch(error) {
-        results.testContextId=error.message
+        results.testSymmetricEncryption = error.message
+    }
+
+
+}
+
+//############################################################
+async function testAsymmetricEncryption() {
+
+    try {
+        var { secretKeyHex, publicKeyHex } = await secUtl.createKeyPairHex()
+        var { secretKeyBytes, publicKeyBytes } = await secUtl.createKeyPairBytes()
+        
+        var secretsObject = await secUtl.asymmetricEncryptHex(testString, publicKeyHex)
+        var decrypted = await secUtl.asymmetricDecryptHex(secretsObject, secretKeyHex)
+        var hexMatched = decrypted == testString
+
+        secretsObject = await secUtl.asymmetricEncryptBytes(testString, publicKeyBytes)
+        decrypted = await secUtl.asymmetricDecryptBytes(secretsObject, secretKeyBytes)
+        var bytesMatched = decrypted == testString
+
+        // secretsObject = await secUtl.asymmetricEncryptOld(testString, publicKeyHex)
+        // decrypted = await secUtl.asymmetricDecryptHex(secretsObject, secretKeyHex)
+        // console.log("hello 1! "+(decrypted == testString))
+        // secretsObject = await secUtl.asymmetricEncryptHex(testString, publicKeyHex)
+        // decrypted = await secUtl.asymmetricDecryptOld(secretsObject, secretKeyHex)
+        // console.log("hello 2! "+(decrypted == testString))
+
+        if(hexMatched && bytesMatched){
+            let success = true
+            let before
+            let after
+            let hexMS
+            let bytesMS
+            let c
+
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                secretsObject = await secUtl.asymmetricEncryptHex(testString, publicKeyHex)
+                decrypted = await secUtl.asymmetricDecryptHex(secretsObject, secretKeyHex)
+            }
+            after = performance.now()
+            hexMS = after - before
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                secretsObject = await secUtl.asymmetricEncryptBytes(testString, publicKeyBytes)
+                decrypted = await secUtl.asymmetricDecryptBytes(secretsObject, secretKeyBytes)        
+            }
+            after = performance.now()
+            bytesMS = after - before
+
+
+            results.testAsymmetricEncryption = {success, hexMS, bytesMS}
+        } else {
+            var error = "Error: Decrypted did not match original content!"
+            results.testAsymmetricEncryption = {error, hexMatched, bytesMatched} 
+        }
+    } catch(error) {
+        results.testAsymmetricEncryption = error.message
     }
 
 }
+
+//############################################################
+async function testSalts() {
+
+    try {
+        var salt = await secUtl.createRandomLengthSalt()
+        var saltedContent = salt+testString
+        var content = await secUtl.removeSalt(saltedContent)
+        if(content == testString) {
+            results.testSalts="success"
+        } else {
+            results.testSalts="Error: original: "+testString+" doesn't match unsalted: "+content
+        }
+
+    } catch(error) {
+        results.testSalts=error.message
+    }
+
+}
+
+
+
 
 //############################################################
 async function testAuthCode() {
@@ -338,122 +431,6 @@ async function testSessionKey() {
 
     } catch(error) {
         results.testSessionKey=error.message
-    }
-
-}
-
-//############################################################
-async function testSymmetricEncryption() {
-
-    try {
-        var keyHex = await secUtl.createSymKeyHex()
-    
-        var gibbrishHex = await secUtl.symmetricEncryptHex(testString, keyHex)    
-        var decrypted = await secUtl.symmetricDecrypt(gibbrishHex, keyHex)
-        
-        var hexMatched = decrypted == testString
-
-        var keyBytes = await secUtl.createSymKeyBytes()
-        var gibbrishBytes = await secUtl.symmetricEncryptBytes(testString, keyBytes)    
-        decrypted = await secUtl.symmetricDecryptBytes(gibbrishBytes, keyBytes)
-
-        var bytesMatched = decrypted == testString
-
-        if(hexMatched && bytesMatched){
-            let success = true
-            let before
-            let after
-            let hexMS
-            let bytesMS
-            let c
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                gibbrishHex = await secUtl.symmetricEncryptHex(testString, keyHex)
-                decrypted = await secUtl.symmetricDecrypt(gibbrishHex, keyHex)
-            }
-            after = performance.now()
-            hexMS = after - before
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                gibbrishBytes = await secUtl.symmetricEncryptBytes(testString, keyBytes)    
-                decrypted = await secUtl.symmetricDecryptBytes(gibbrishBytes, keyBytes)
-                    }
-            after = performance.now()
-            bytesMS = after - before
-
-
-            results.testSymmetricEncryption = {success, hexMS, bytesMS}
-        } else {
-            results.testSymmetricEncryption = "Error: Decrypted did not match original content!"
-        }
-    } catch(error) {
-        results.testSymmetricEncryption = error.message
-    }
-
-
-}
-
-//############################################################
-async function testAsymmetricEncryption() {
-
-    try {
-        var { secretKeyHex, publicKeyHex } = await secUtl.createKeyPairHex()
-        var { secretKeyBytes, publicKeyBytes } = await secUtl.createKeyPairBytes()
-        
-        var secretsObject = await secUtl.asymmetricEncryptHex(testString, publicKeyHex)
-        var decrypted = await secUtl.asymmetricDecryptHex(secretsObject, secretKeyHex)
-        var hexMatched = decrypted == testString
-
-        secretsObject = await secUtl.asymmetricEncryptBytes(testString, publicKeyBytes)
-        decrypted = await secUtl.asymmetricDecryptBytes(secretsObject, secretKeyBytes)
-        var bytesMatched = decrypted == testString
-
-        // secretsObject = await secUtl.asymmetricEncryptOld(testString, publicKeyHex)
-        // decrypted = await secUtl.asymmetricDecryptHex(secretsObject, secretKeyHex)
-        // console.log("hello 1! "+(decrypted == testString))
-        // secretsObject = await secUtl.asymmetricEncryptHex(testString, publicKeyHex)
-        // decrypted = await secUtl.asymmetricDecryptOld(secretsObject, secretKeyHex)
-        // console.log("hello 2! "+(decrypted == testString))
-
-        if(hexMatched && bytesMatched){
-            let success = true
-            let before
-            let after
-            let hexMS
-            let bytesMS
-            let c
-
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                secretsObject = await secUtl.asymmetricEncryptHex(testString, publicKeyHex)
-                decrypted = await secUtl.asymmetricDecryptHex(secretsObject, secretKeyHex)
-            }
-            after = performance.now()
-            hexMS = after - before
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                secretsObject = await secUtl.asymmetricEncryptBytes(testString, publicKeyBytes)
-                decrypted = await secUtl.asymmetricDecryptBytes(secretsObject, secretKeyBytes)        
-            }
-            after = performance.now()
-            bytesMS = after - before
-
-
-            results.testAsymmetricEncryption = {success, hexMS, bytesMS}
-        } else {
-            var error = "Error: Decrypted did not match original content!"
-            results.testAsymmetricEncryption = {error, hexMatched, bytesMatched} 
-        }
-    } catch(error) {
-        results.testAsymmetricEncryption = error.message
     }
 
 }
@@ -713,46 +690,26 @@ async function testReferencedSharedSecretRaw() {
     }
 }
 
-//############################################################
-async function testSalts() {
 
-    try {
-        var salt = await secUtl.createRandomLengthSalt()
-        var saltedContent = salt+testString
-        var content = await secUtl.removeSalt(saltedContent)
-        if(content == testString) {
-            results.testSalts="success"
-        } else {
-            results.testSalts="Error: original: "+testString+" doesn't match unsalted: "+content
-        }
 
-    } catch(error) {
-        results.testSalts=error.message
-    }
 
-}
 
 //############################################################
 async function runAllTest() {
 
     await testShas()
+    await testPublicKey()
+    await testSignatures()
+    await testSymmetricEncryption()
+    await testAsymmetricEncryption()    
+    await testSalts()
 
     await testAuthCode()
     await testSessionKey()
-    await testContextId()
-
-    await testPublicKey()
-    await testSignatures()
-
-    await testSymmetricEncryption()
-    await testAsymmetricEncryption()
-    
     await testCreateSharedSecretHash()
     await testCreateSharedSecretRaw()
     await testReferencedSharedSecretHash()
     await testReferencedSharedSecretRaw()
-
-    await testSalts()
 
     evaluate()
 }
