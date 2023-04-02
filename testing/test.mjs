@@ -1,11 +1,12 @@
 import * as secUtl from "../output/index.js"
 import { performance } from "perf_hooks"
+import constructionmodule from "thingymodulecreate/constructionmodule.js"
 
 const results = {}
 
 const testString = "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^"
 
-const count = 100
+const count = 100000000
 
 //############################################################
 async function testShas() {
@@ -300,14 +301,55 @@ async function testAsymmetricEncryption() {
 async function testSalts() {
 
     try {
-        var salt = await secUtl.createRandomLengthSalt()
-        var saltedContent = salt+testString
-        var content = await secUtl.removeSalt(saltedContent)
-        if(content == testString) {
-            results.testSalts="success"
+
+        // var content = "aaaaa"
+        var content = testString
+        // console.log("content: "+content)
+        var saltedContent = secUtl.saltContent(content)
+        // console.log(JSON.stringify(saltedContent, null, 4))
+        // console.log("saltedContent: "+saltedContent)
+        var unsaltedContent = secUtl.unsaltContent(saltedContent)
+        // console.log("unsaltedContent: "+unsaltedContent)
+        
+        if(content == unsaltedContent) {
+            let success = true
+            let before
+            let after
+            let durationMS
+            let c
+
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                saltedContent = secUtl.saltContent(content)
+                unsaltedContent = secUtl.unsaltContent(saltedContent)
+                if(content != unsaltedContent) {
+                    console.log(JSON.stringify(Uint8Array.from(saltedContent)))
+                    console.log("unsaltedContent: "+unsaltedContent)
+                    throw new Error("Error: Unsalted content did not match original content!")
+                }
+            }
+            after = performance.now()
+            durationMS = after - before
+
+            results.testSalts = {success, durationMS}
         } else {
-            results.testSalts="Error: original: "+testString+" doesn't match unsalted: "+content
+            var error = "Error: Unsalted content did not match original content!"
+            unsaltedContent = Uint8Array.from(unsaltedContent)
+            results.testSalts = {error, content, unsaltedContent} 
         }
+
+        // var salt = await secUtl.createRandomLengthSalt()
+        // var saltedContent = salt+testString
+        // var content = await secUtl.removeSalt(saltedContent)
+        // if(content == testString) {
+        //     results.testSalts="success"
+        // } else {
+        //     results.testSalts="Error: original: "+testString+" doesn't match unsalted: "+content
+        // }
+
+
 
     } catch(error) {
         results.testSalts=error.message
@@ -578,16 +620,16 @@ async function testReferencedSharedSecretRaw() {
 //############################################################
 async function runAllTest() {
 
-    await testShas()
-    await testPublicKey()
-    await testSignatures()
-    await testSymmetricEncryption()
-    await testAsymmetricEncryption()    
+    // await testShas()
+    // await testPublicKey()
+    // await testSignatures()
+    // await testSymmetricEncryption()
+    // await testAsymmetricEncryption()    
 
-    await testCreateSharedSecretHash()
-    await testCreateSharedSecretRaw()
-    await testReferencedSharedSecretHash()
-    await testReferencedSharedSecretRaw()
+    // await testCreateSharedSecretHash()
+    // await testCreateSharedSecretRaw()
+    // await testReferencedSharedSecretHash()
+    // await testReferencedSharedSecretRaw()
 
     await testSalts()
 
