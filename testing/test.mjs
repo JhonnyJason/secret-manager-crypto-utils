@@ -646,7 +646,7 @@ async function testReferencedSharedSecretRaw() {
 //############################################################
 async function runAllTest() {
 
-    // await testShas()
+    await testShas()
     // await testPublicKey()
     // await testSignatures()
     await testSymmetricEncryption()
@@ -657,7 +657,7 @@ async function runAllTest() {
     // await testReferencedSharedSecretHash()
     // await testReferencedSharedSecretRaw()
 
-    // await testSalts()
+    await testSalts()
 
     evaluate()
 
