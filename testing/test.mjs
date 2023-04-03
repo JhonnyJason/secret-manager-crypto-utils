@@ -6,7 +6,7 @@ const results = {}
 
 const testString = "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^"
 
-const count = 100000000
+const count = 100000
 
 //############################################################
 async function testShas() {
@@ -204,7 +204,19 @@ async function testSymmetricEncryption() {
             let after
             let hexMS
             let bytesMS
+            let oldHexMS
+            let saltedContent
+            let unsaltedContent
             let c
+
+            c = count
+            before = performance.now()
+            while(c--) {
+                gibbrishBytes = await secUtl.symmetricEncryptBytes(testString, keyBytes)    
+                decrypted = await secUtl.symmetricDecryptBytes(gibbrishBytes, keyBytes)
+                    }
+            after = performance.now()
+            bytesMS = after - before
 
             c = count
             before = performance.now()
@@ -218,14 +230,16 @@ async function testSymmetricEncryption() {
             c = count
             before = performance.now()
             while(c--) {
-                gibbrishBytes = await secUtl.symmetricEncryptBytes(testString, keyBytes)    
-                decrypted = await secUtl.symmetricDecryptBytes(gibbrishBytes, keyBytes)
-                    }
+                saltedContent = secUtl.createRandomLengthSalt() + testString
+                gibbrishHex = await secUtl.symmetricEncryptUnsalted(saltedContent, keyHex)
+                decrypted = await secUtl.symmetricDecryptUnsalted(gibbrishHex, keyHex)
+                unsaltedContent = secUtl.removeSalt(decrypted)
+            }
             after = performance.now()
-            bytesMS = after - before
+            oldHexMS = after - before
 
 
-            results.testSymmetricEncryption = {success, hexMS, bytesMS}
+            results.testSymmetricEncryption = {success, hexMS, oldHexMS, bytesMS}
         } else {
             results.testSymmetricEncryption = "Error: Decrypted did not match original content!"
         }
@@ -315,7 +329,8 @@ async function testSalts() {
             let success = true
             let before
             let after
-            let durationMS
+            let newSaltMS
+            let oldSaltMS
             let c
 
 
@@ -327,13 +342,27 @@ async function testSalts() {
                 if(content != unsaltedContent) {
                     console.log(JSON.stringify(Uint8Array.from(saltedContent)))
                     console.log("unsaltedContent: "+unsaltedContent)
-                    throw new Error("Error: Unsalted content did not match original content!")
+                    throw new Error("Error on NewSalt: Unsalted content did not match original content!")
                 }
             }
             after = performance.now()
-            durationMS = after - before
+            newSaltMS = after - before
 
-            results.testSalts = {success, durationMS}
+            c = count
+            before = performance.now()
+            while(c--) {
+                saltedContent = secUtl.createRandomLengthSalt() + content
+                unsaltedContent = secUtl.removeSalt(saltedContent)
+                if(content != unsaltedContent) {
+                    console.log(JSON.stringify(Uint8Array.from(saltedContent)))
+                    console.log("unsaltedContent: "+unsaltedContent)
+                    throw new Error("Error on oldSalt: Unsalted content did not match original content!")
+                }
+            }
+            after = performance.now()
+            oldSaltMS = after - before
+
+            results.testSalts = {success, newSaltMS, oldSaltMS}
         } else {
             var error = "Error: Unsalted content did not match original content!"
             unsaltedContent = Uint8Array.from(unsaltedContent)
@@ -614,16 +643,13 @@ async function testReferencedSharedSecretRaw() {
 }
 
 
-
-
-
 //############################################################
 async function runAllTest() {
 
     // await testShas()
     // await testPublicKey()
     // await testSignatures()
-    // await testSymmetricEncryption()
+    await testSymmetricEncryption()
     // await testAsymmetricEncryption()    
 
     // await testCreateSharedSecretHash()
@@ -631,7 +657,7 @@ async function runAllTest() {
     // await testReferencedSharedSecretHash()
     // await testReferencedSharedSecretRaw()
 
-    await testSalts()
+    // await testSalts()
 
     evaluate()
 
