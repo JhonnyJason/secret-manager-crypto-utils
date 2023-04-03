@@ -6,7 +6,7 @@ const results = {}
 
 const testString = "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^"
 
-const count = 100000
+const count = 1
 
 //############################################################
 async function testShas() {
@@ -77,10 +77,13 @@ async function testShas() {
     }
 }
 
+//############################################################
 async function testPublicKey() {
     try {
-        var keyPairHex = await secUtl.createKeyPairHex()
-        var keyPairBytes = await secUtl.createKeyPairBytes()
+        var keyPairHex = secUtl.createKeyPairHex()
+        console.log(keyPairHex.publicKeyHex)
+
+        var keyPairBytes = secUtl.createKeyPairBytes()
         // console.log(JSON.stringify(keyPairHex, null, 4))
         // console.log(JSON.stringify(keyPairBytes, null, 4))
         var pubHex = await secUtl.createPublicKeyHex(keyPairHex.secretKeyHex)
@@ -647,9 +650,9 @@ async function testReferencedSharedSecretRaw() {
 async function runAllTest() {
 
     await testShas()
-    // await testPublicKey()
-    // await testSignatures()
-    await testSymmetricEncryption()
+    await testPublicKey()
+    await testSignatures()
+    // await testSymmetricEncryption()
     // await testAsymmetricEncryption()    
 
     // await testCreateSharedSecretHash()
@@ -657,7 +660,7 @@ async function runAllTest() {
     // await testReferencedSharedSecretHash()
     // await testReferencedSharedSecretRaw()
 
-    await testSalts()
+    // await testSalts()
 
     evaluate()
 
