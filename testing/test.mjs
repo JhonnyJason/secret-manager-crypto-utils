@@ -6,7 +6,7 @@ const results = {}
 
 const testString = "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^"
 
-const count = 1
+const count = 1000
 
 //############################################################
 async function testShas() {
@@ -80,10 +80,10 @@ async function testShas() {
 //############################################################
 async function testPublicKey() {
     try {
-        var keyPairHex = secUtl.createKeyPairHex()
-        console.log(keyPairHex.publicKeyHex)
+        var keyPairHex = await secUtl.createKeyPairHex()
+        // console.log(keyPairHex.publicKeyHex)
 
-        var keyPairBytes = secUtl.createKeyPairBytes()
+        var keyPairBytes = await secUtl.createKeyPairBytes()
         // console.log(JSON.stringify(keyPairHex, null, 4))
         // console.log(JSON.stringify(keyPairBytes, null, 4))
         var pubHex = await secUtl.createPublicKeyHex(keyPairHex.secretKeyHex)
@@ -207,7 +207,6 @@ async function testSymmetricEncryption() {
             let after
             let hexMS
             let bytesMS
-            let oldHexMS
             let saltedContent
             let unsaltedContent
             let c
@@ -230,19 +229,7 @@ async function testSymmetricEncryption() {
             after = performance.now()
             hexMS = after - before
 
-            c = count
-            before = performance.now()
-            while(c--) {
-                saltedContent = secUtl.createRandomLengthSalt() + testString
-                gibbrishHex = await secUtl.symmetricEncryptUnsalted(saltedContent, keyHex)
-                decrypted = await secUtl.symmetricDecryptUnsalted(gibbrishHex, keyHex)
-                unsaltedContent = secUtl.removeSalt(decrypted)
-            }
-            after = performance.now()
-            oldHexMS = after - before
-
-
-            results.testSymmetricEncryption = {success, hexMS, oldHexMS, bytesMS}
+            results.testSymmetricEncryption = {success, hexMS, bytesMS}
         } else {
             results.testSymmetricEncryption = "Error: Decrypted did not match original content!"
         }
@@ -267,13 +254,6 @@ async function testAsymmetricEncryption() {
         secretsObject = await secUtl.asymmetricEncryptBytes(testString, publicKeyBytes)
         decrypted = await secUtl.asymmetricDecryptBytes(secretsObject, secretKeyBytes)
         var bytesMatched = decrypted == testString
-
-        // secretsObject = await secUtl.asymmetricEncryptOld(testString, publicKeyHex)
-        // decrypted = await secUtl.asymmetricDecryptHex(secretsObject, secretKeyHex)
-        // console.log("hello 1! "+(decrypted == testString))
-        // secretsObject = await secUtl.asymmetricEncryptHex(testString, publicKeyHex)
-        // decrypted = await secUtl.asymmetricDecryptOld(secretsObject, secretKeyHex)
-        // console.log("hello 2! "+(decrypted == testString))
 
         if(hexMatched && bytesMatched){
             let success = true
@@ -332,8 +312,7 @@ async function testSalts() {
             let success = true
             let before
             let after
-            let newSaltMS
-            let oldSaltMS
+            let saltMS
             let c
 
 
@@ -349,23 +328,9 @@ async function testSalts() {
                 }
             }
             after = performance.now()
-            newSaltMS = after - before
+            saltMS = after - before
 
-            c = count
-            before = performance.now()
-            while(c--) {
-                saltedContent = secUtl.createRandomLengthSalt() + content
-                unsaltedContent = secUtl.removeSalt(saltedContent)
-                if(content != unsaltedContent) {
-                    console.log(JSON.stringify(Uint8Array.from(saltedContent)))
-                    console.log("unsaltedContent: "+unsaltedContent)
-                    throw new Error("Error on oldSalt: Unsalted content did not match original content!")
-                }
-            }
-            after = performance.now()
-            oldSaltMS = after - before
-
-            results.testSalts = {success, newSaltMS, oldSaltMS}
+            results.testSalts = {success, saltMS}
         } else {
             var error = "Error: Unsalted content did not match original content!"
             unsaltedContent = Uint8Array.from(unsaltedContent)
@@ -648,12 +613,14 @@ async function testReferencedSharedSecretRaw() {
 
 //############################################################
 async function runAllTest() {
+    await testShas() // get rid fresh start performance regression
 
-    await testShas()
-    await testPublicKey()
-    await testSignatures()
-    // await testSymmetricEncryption()
-    // await testAsymmetricEncryption()    
+    // real tests
+    await testShas() // seem to work ;)
+    await testPublicKey() // seem to work ;)
+    await testSignatures() // seem to work ;)
+    await testSymmetricEncryption() // seem to work ;)
+    await testAsymmetricEncryption()    
 
     // await testCreateSharedSecretHash()
     // await testCreateSharedSecretRaw()
