@@ -209,8 +209,7 @@ async function testSymmetricEncryption() {
             let after
             let hexMS
             let bytesMS
-            let saltedContent
-            let unsaltedContent
+            let unsaltedMS
             let c
 
             c = count
@@ -218,7 +217,8 @@ async function testSymmetricEncryption() {
             while(c--) {
                 gibbrishBytes = await secUtl.symmetricEncryptBytes(testString, keyBytes)    
                 decrypted = await secUtl.symmetricDecryptBytes(gibbrishBytes, keyBytes)
-                    }
+                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! bytesVersion @count"+c)}
+            }
             after = performance.now()
             bytesMS = after - before
 
@@ -227,11 +227,23 @@ async function testSymmetricEncryption() {
             while(c--) {
                 gibbrishHex = await secUtl.symmetricEncryptHex(testString, keyHex)
                 decrypted = await secUtl.symmetricDecrypt(gibbrishHex, keyHex)
+                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! hexVersion @count"+c)}
             }
             after = performance.now()
             hexMS = after - before
 
-            results.testSymmetricEncryption = {success, hexMS, bytesMS}
+            c = count
+            before = performance.now()
+            while(c--) {
+                gibbrishHex = await secUtl.symmetricEncryptUnsalted(testString, keyHex)
+                decrypted = await secUtl.symmetricDecryptUnsalted(gibbrishHex, keyHex)
+                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! unsaltedVersion @count"+c)}
+            }
+            after = performance.now()
+            unsaltedMS = after - before
+
+
+            results.testSymmetricEncryption = {success, hexMS, bytesMS, unsaltedMS}
         } else {
             results.testSymmetricEncryption = "Error: Decrypted did not match original content!"
         }
@@ -358,7 +370,7 @@ async function testSalts() {
 
 
 //############################################################
-async function testCreateSharedSecretHash() {
+async function testDiffieHellmanSecretHash() {
 
     try {
         var kpBytes = await secUtl.createKeyPairBytes()
@@ -375,13 +387,13 @@ async function testCreateSharedSecretHash() {
 
         var context = "test.extensivlyon.coffee/ultra-context"
 
-        var sharedSecretAliceHex = await secUtl.createSharedSecretHashHex(alicePrivHex, bobPubHex, context)
-        var sharedSecretBobHex = await secUtl.createSharedSecretHashHex(bobPrivHex, alicePubHex, context)
+        var sharedSecretAliceHex = await secUtl.diffieHellmanSecretHashHex(alicePrivHex, bobPubHex, context)
+        var sharedSecretBobHex = await secUtl.diffieHellmanSecretHashHex(bobPrivHex, alicePubHex, context)
         if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error(`Hex Shared Secrets did not match!\n sharedSecretAliceHex: ${sharedSecretAliceHex}\nsharedSecretBobHex: ${sharedSecretBobHex}`)}
 
 
-        var sharedSecretAliceBytes = await secUtl.createSharedSecretHashBytes(alicePrivBytes, bobPubBytes, context)
-        var sharedSecretBobBytes = await secUtl.createSharedSecretHashBytes(bobPrivBytes, alicePubBytes, context)
+        var sharedSecretAliceBytes = await secUtl.diffieHellmanSecretHashBytes(alicePrivBytes, bobPubBytes, context)
+        var sharedSecretBobBytes = await secUtl.diffieHellmanSecretHashBytes(bobPrivBytes, alicePubBytes, context)
         if(sharedSecretAliceBytes.toString("hex") != sharedSecretBobBytes.toString("hex")) { throw new Error(`Bytes Shared Secrets did not match!\n sharedSecretAliceBytes: ${sharedSecretAliceBytes}\nsharedSecretBobBytes: ${sharedSecretBobBytes}`)}
         
         
@@ -398,8 +410,8 @@ async function testCreateSharedSecretHash() {
         c = count
         before = performance.now()
         while(c--) {
-            sharedSecretAliceHex = await secUtl.createSharedSecretHashHex(alicePrivHex, bobPubHex, context)
-            sharedSecretBobHex = await secUtl.createSharedSecretHashHex(bobPrivHex, alicePubHex, context)
+            sharedSecretAliceHex = await secUtl.diffieHellmanSecretHashHex(alicePrivHex, bobPubHex, context)
+            sharedSecretBobHex = await secUtl.diffieHellmanSecretHashHex(bobPrivHex, alicePubHex, context)
         }
         after = performance.now()
         hexMS = after - before
@@ -407,21 +419,21 @@ async function testCreateSharedSecretHash() {
         c = count
         before = performance.now()
         while(c--) {
-            sharedSecretAliceBytes = await secUtl.createSharedSecretHashBytes(alicePrivBytes, bobPubBytes, context)
-            sharedSecretBobBytes = await secUtl.createSharedSecretHashBytes(bobPrivBytes, alicePubBytes, context)
+            sharedSecretAliceBytes = await secUtl.diffieHellmanSecretHashBytes(alicePrivBytes, bobPubBytes, context)
+            sharedSecretBobBytes = await secUtl.diffieHellmanSecretHashBytes(bobPrivBytes, alicePubBytes, context)
         }
         after = performance.now()
         bytesMS = after - before
-        results.createSharedSecretHash = {success, hexMS, bytesMS}
+        results.diffieHellmanSecretHash = {success, hexMS, bytesMS}
 
     } catch(error) {
-        results.createSharedSecretHash = error.message
+        results.diffieHellmanSecretHash = error.message
     }
 
 }
 
 //############################################################
-async function testCreateSharedSecretRaw() {
+async function testDiffieHellmanSecretRaw() {
 
     try {
         var kpBytes = await secUtl.createKeyPairBytes()
@@ -436,13 +448,13 @@ async function testCreateSharedSecretRaw() {
         var bobPrivHex = Buffer.from(bobPrivBytes).toString("hex")
         var bobPubHex = Buffer.from(bobPubBytes).toString("hex")
 
-        var sharedSecretAliceHex = await secUtl.createSharedSecretRawHex(alicePrivHex, bobPubHex)
-        var sharedSecretBobHex = await secUtl.createSharedSecretRawHex(bobPrivHex, alicePubHex)
+        var sharedSecretAliceHex = await secUtl.diffieHellmanSecretRawHex(alicePrivHex, bobPubHex)
+        var sharedSecretBobHex = await secUtl.diffieHellmanSecretRawHex(bobPrivHex, alicePubHex)
         if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error(`Hex Shared Secrets did not match!\n sharedSecretAliceHex: ${sharedSecretAliceHex}\nsharedSecretBobHex: ${sharedSecretBobHex}`)}
 
 
-        var sharedSecretAliceBytes = await secUtl.createSharedSecretRawBytes(alicePrivBytes, bobPubBytes)
-        var sharedSecretBobBytes = await secUtl.createSharedSecretRawBytes(bobPrivBytes, alicePubBytes)
+        var sharedSecretAliceBytes = await secUtl.diffieHellmanSecretRawBytes(alicePrivBytes, bobPubBytes)
+        var sharedSecretBobBytes = await secUtl.diffieHellmanSecretRawBytes(bobPrivBytes, alicePubBytes)
         if(sharedSecretAliceBytes.toString("hex") != sharedSecretBobBytes.toString("hex")) { throw new Error(`Bytes Shared Secrets did not match!\n sharedSecretAliceBytes: ${sharedSecretAliceBytes}\nsharedSecretBobBytes: ${sharedSecretBobBytes}`)}
         
         
@@ -459,8 +471,8 @@ async function testCreateSharedSecretRaw() {
         c = count
         before = performance.now()
         while(c--) {
-            sharedSecretAliceHex = await secUtl.createSharedSecretRawHex(alicePrivHex, bobPubHex)
-            sharedSecretBobHex = await secUtl.createSharedSecretRawHex(bobPrivHex, alicePubHex)
+            sharedSecretAliceHex = await secUtl.diffieHellmanSecretRawHex(alicePrivHex, bobPubHex)
+            sharedSecretBobHex = await secUtl.diffieHellmanSecretRawHex(bobPrivHex, alicePubHex)
         }
         after = performance.now()
         hexMS = after - before
@@ -468,21 +480,21 @@ async function testCreateSharedSecretRaw() {
         c = count
         before = performance.now()
         while(c--) {
-            sharedSecretAliceBytes = await secUtl.createSharedSecretRawBytes(alicePrivBytes, bobPubBytes)
-            sharedSecretBobBytes = await secUtl.createSharedSecretRawBytes(bobPrivBytes, alicePubBytes)
+            sharedSecretAliceBytes = await secUtl.diffieHellmanSecretRawBytes(alicePrivBytes, bobPubBytes)
+            sharedSecretBobBytes = await secUtl.diffieHellmanSecretRawBytes(bobPrivBytes, alicePubBytes)
         }
         after = performance.now()
         bytesMS = after - before
-        results.createSharedSecretRaw = {success, hexMS, bytesMS}
+        results.diffieHellmanSecretRaw = {success, hexMS, bytesMS}
 
     } catch(error) {
-        results.createSharedSecretRaw = error.message
+        results.diffieHellmanSecretRaw = error.message
     }
 
 }
 
 //############################################################
-async function testReferencedSharedSecretHash() {
+async function testElGamalSecretHash() {
 
     try {
         var kpBytes = await secUtl.createKeyPairBytes()
@@ -499,19 +511,19 @@ async function testReferencedSharedSecretHash() {
 
         var context = "test.extensivlyon.coffee/ultra-context"
 
-        var referencedHex = await secUtl.referencedSharedSecretHashHex(bobPubHex, context)
+        var referencedHex = await secUtl.elGamalSecretHashHex(bobPubHex, context)
         var referencePointHex = referencedHex.referencePointHex
         var sharedSecretAliceHex = referencedHex.sharedSecretHex
 
-        var sharedSecretBobHex = await secUtl.createSharedSecretHashHex(bobPrivHex, referencePointHex, context)
+        var sharedSecretBobHex = await secUtl.diffieHellmanSecretHashHex(bobPrivHex, referencePointHex, context)
         if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error(`Hex Shared Secrets did not match!\n sharedSecretAliceHex: ${sharedSecretAliceHex}\nsharedSecretBobHex: ${sharedSecretBobHex}`)}
 
 
-        var referencedBytes = await secUtl.referencedSharedSecretHashBytes(bobPubBytes, context)
+        var referencedBytes = await secUtl.elGamalSecretHashBytes(bobPubBytes, context)
         var referencePointBytes = referencedBytes.referencePointBytes
         var sharedSecretAliceBytes = referencedBytes.sharedSecretBytes
 
-        var sharedSecretBobBytes = await secUtl.createSharedSecretHashBytes(bobPrivBytes, referencePointBytes, context)
+        var sharedSecretBobBytes = await secUtl.diffieHellmanSecretHashBytes(bobPrivBytes, referencePointBytes, context)
         if(Buffer.from(sharedSecretAliceBytes).toString("hex") != Buffer.from(sharedSecretBobBytes).toString("hex")) { throw new Error(`Bytes Shared Secrets did not match!\n sharedSecretAliceBytes: ${sharedSecretAliceBytes}\nsharedSecretBobBytes: ${sharedSecretBobBytes}`)}
         
         
@@ -525,8 +537,8 @@ async function testReferencedSharedSecretHash() {
         c = count
         before = performance.now()
         while(c--) {
-            sharedSecretAliceHex = await secUtl.referencedSharedSecretHashHex(bobPubHex, context)
-            sharedSecretBobHex = await secUtl.referencedSharedSecretHashHex(alicePubHex, context)
+            sharedSecretAliceHex = await secUtl.elGamalSecretHashHex(bobPubHex, context)
+            sharedSecretBobHex = await secUtl.elGamalSecretHashHex(alicePubHex, context)
         }
         after = performance.now()
         hexMS = after - before
@@ -534,21 +546,21 @@ async function testReferencedSharedSecretHash() {
         c = count
         before = performance.now()
         while(c--) {
-            sharedSecretAliceBytes = await secUtl.referencedSharedSecretHashBytes(bobPubBytes, context)
-            sharedSecretBobBytes = await secUtl.referencedSharedSecretHashBytes(alicePubBytes, context)
+            sharedSecretAliceBytes = await secUtl.elGamalSecretHashBytes(bobPubBytes, context)
+            sharedSecretBobBytes = await secUtl.elGamalSecretHashBytes(alicePubBytes, context)
         }
         after = performance.now()
         bytesMS = after - before
-        results.referencedSharedSecretHash = {success, hexMS, bytesMS}
+        results.elGamalSecretHash = {success, hexMS, bytesMS}
 
     } catch(error) {
-        results.referencedSharedSecretHash = error.message
+        results.elGamalSecretHash = error.message
     }
 
 }
 
 //############################################################
-async function testReferencedSharedSecretRaw() {
+async function testElGamalSecretRaw() {
 
     try {
         var kpBytes = await secUtl.createKeyPairBytes()
@@ -565,19 +577,19 @@ async function testReferencedSharedSecretRaw() {
 
         var context = "test.extensivlyon.coffee/ultra-context"
 
-        var referencedHex = await secUtl.referencedSharedSecretRawHex(bobPubHex, context)
+        var referencedHex = await secUtl.elGamalSecretRawHex(bobPubHex, context)
         var referencePointHex = referencedHex.referencePointHex
         var sharedSecretAliceHex = referencedHex.sharedSecretHex
 
-        var sharedSecretBobHex = await secUtl.createSharedSecretRawHex(bobPrivHex, referencePointHex, context)
+        var sharedSecretBobHex = await secUtl.diffieHellmanSecretRawHex(bobPrivHex, referencePointHex, context)
         if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error(`Hex Shared Secrets did not match!\n sharedSecretAliceHex: ${sharedSecretAliceHex}\nsharedSecretBobHex: ${sharedSecretBobHex}`)}
 
 
-        var referencedBytes = await secUtl.referencedSharedSecretRawBytes(bobPubBytes, context)
+        var referencedBytes = await secUtl.elGamalSecretRawBytes(bobPubBytes, context)
         var referencePointBytes = referencedBytes.referencePointBytes
         var sharedSecretAliceBytes = referencedBytes.sharedSecretBytes
 
-        var sharedSecretBobBytes = await secUtl.createSharedSecretRawBytes(bobPrivBytes, referencePointBytes, context)
+        var sharedSecretBobBytes = await secUtl.diffieHellmanSecretRawBytes(bobPrivBytes, referencePointBytes, context)
         if(Buffer.from(sharedSecretAliceBytes).toString("hex") != Buffer.from(sharedSecretBobBytes).toString("hex")) { throw new Error(`Bytes Shared Secrets did not match!\n sharedSecretAliceBytes: ${sharedSecretAliceBytes}\nsharedSecretBobBytes: ${sharedSecretBobBytes}`)}
         
         
@@ -591,8 +603,8 @@ async function testReferencedSharedSecretRaw() {
         c = count
         before = performance.now()
         while(c--) {
-            sharedSecretAliceHex = await secUtl.referencedSharedSecretRawHex(bobPubHex, context)
-            sharedSecretBobHex = await secUtl.referencedSharedSecretRawHex(alicePubHex, context)
+            sharedSecretAliceHex = await secUtl.elGamalSecretRawHex(bobPubHex, context)
+            sharedSecretBobHex = await secUtl.elGamalSecretRawHex(alicePubHex, context)
         }
         after = performance.now()
         hexMS = after - before
@@ -600,15 +612,15 @@ async function testReferencedSharedSecretRaw() {
         c = count
         before = performance.now()
         while(c--) {
-            sharedSecretAliceBytes = await secUtl.referencedSharedSecretRawBytes(bobPubBytes, context)
-            sharedSecretBobBytes = await secUtl.referencedSharedSecretRawBytes(alicePubBytes, context)
+            sharedSecretAliceBytes = await secUtl.elGamalSecretRawBytes(bobPubBytes, context)
+            sharedSecretBobBytes = await secUtl.elGamalSecretRawBytes(alicePubBytes, context)
         }
         after = performance.now()
         bytesMS = after - before
-        results.referencedSharedSecretRaw = {success, hexMS, bytesMS}
+        results.elGamalSecretRaw = {success, hexMS, bytesMS}
 
     } catch(error) {
-        results.referencedSharedSecretRaw = error.message
+        results.elGamalSecretRaw = error.message
     }
 }
 
@@ -624,12 +636,12 @@ async function runAllTest() {
     await testSymmetricEncryption() // seem to work ;)
     await testAsymmetricEncryption()    
 
-    // await testCreateSharedSecretHash()
-    // await testCreateSharedSecretRaw()
-    // await testReferencedSharedSecretHash()
-    // await testReferencedSharedSecretRaw()
+    await testDiffieHellmanSecretHash()
+    await testDiffieHellmanSecretRaw()
+    await testElGamalSecretHash()
+    await testElGamalSecretRaw()
 
-    // await testSalts()
+    await testSalts()
 
     evaluate()
 
