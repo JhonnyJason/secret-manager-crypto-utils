@@ -156,6 +156,7 @@ async function testSignatures() {
             while(c--) {
                 signatureHex = await secUtl.createSignatureHex(testString, secretKeyHex)
                 verifiedHex = await secUtl.verify(signatureHex, publicKeyHex, testString)
+                if(!verifiedHex) {throw new Error("Error: Signature not verified! verifiedHex @count"+c)}
             }
             after = performance.now()
             hexMS = after - before
@@ -166,6 +167,7 @@ async function testSignatures() {
             while(c--) {
                 signatureBytes = await secUtl.createSignatureBytes(testString, secretKeyBytes)
                 verifiedBytes = await secUtl.verify(signatureBytes, publicKeyBytes, testString)
+                if(!verifiedBytes) {throw new Error("Error: Signature not verified! verifiedBytes @count"+c)}
             }
             after = performance.now()
             bytesMS = after - before
