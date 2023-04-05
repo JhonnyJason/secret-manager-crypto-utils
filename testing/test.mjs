@@ -256,7 +256,7 @@ async function testSymmetricEncryption() {
             oldHexMS = after - before
 
 
-            results.testSymmetricEncryption = {success, hexMS, bytesMS, unsaltedMS, oldHexMS}
+            results.testSymmetricEncryption = {success, hexMS, bytesMS, oldHexMS}
         } else {
             results.testSymmetricEncryption = "Error: Decrypted did not match original content!"
         }
@@ -387,18 +387,6 @@ async function testSalts() {
             unsaltedContent = Uint8Array.from(unsaltedContent)
             results.testSalts = {error, content, unsaltedContent} 
         }
-
-        // var salt = await secUtl.createRandomLengthSalt()
-        // var saltedContent = salt+testString
-        // var content = await secUtl.removeSalt(saltedContent)
-        // if(content == testString) {
-        //     results.testSalts="success"
-        // } else {
-        //     results.testSalts="Error: original: "+testString+" doesn't match unsalted: "+content
-        // }
-
-
-
     } catch(error) {
         results.testSalts=error.message
     }
@@ -735,18 +723,18 @@ async function runAllTest() {
     await testSignatures() // get rid fresh start performance regression
 
     // real tests
-    await testShas() // seem to work ;)
-    await testPublicKey() // seem to work ;)
-    await testSignatures() // seem to work ;)
-    // await testSymmetricEncryption() // seem to work ;)
-    // await testAsymmetricEncryption()    
+    await testShas() // seems to work ;)
+    await testPublicKey() // seems to work ;)
+    await testSignatures() // seems to work ;)
+    await testSymmetricEncryption() // seems to work ;)
+    await testAsymmetricEncryption() // seems to work ;-)
 
-    // await testDiffieHellmanSecretHash()
-    // await testDiffieHellmanSecretRaw()
-    // await testElGamalSecretHash()
-    // await testElGamalSecretRaw()
+    await testDiffieHellmanSecretHash() // seems to work ;-)
+    await testDiffieHellmanSecretRaw() // seems to work ;-)
+    await testElGamalSecretHash() //  seems to work ;-)
+    await testElGamalSecretRaw() // seems to work ;-)
 
-    // await testSalts()
+    await testSalts() // seems to work ;-)
 
     evaluate()
 
