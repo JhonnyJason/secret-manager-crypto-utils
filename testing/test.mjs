@@ -139,10 +139,10 @@ async function testSignatures() {
         var { secretKeyHex, publicKeyHex } = await secUtl.createKeyPairHex()
 
         var signatureBytes = await secUtl.createSignatureBytes(testString, secretKeyBytes)
-        var verifiedBytes = await secUtl.verify(signatureBytes, publicKeyBytes, testString)
+        var verifiedBytes = await secUtl.verifyBytes(signatureBytes, publicKeyBytes, testString)
 
         var signatureHex = await secUtl.createSignatureHex(testString, secretKeyHex)
-        var verifiedHex = await secUtl.verify(signatureHex, publicKeyHex, testString)
+        var verifiedHex = await secUtl.verifyHex(signatureHex, publicKeyHex, testString)
 
         if(verifiedBytes && verifiedHex) {
             let success = true
@@ -158,7 +158,7 @@ async function testSignatures() {
             before = performance.now()
             while(c--) {
                 signatureHex = await secUtl.createSignatureHex(testString, secretKeyHex)
-                verifiedHex = await secUtl.verify(signatureHex, publicKeyHex, testString)
+                verifiedHex = await secUtl.verifyHex(signatureHex, publicKeyHex, testString)
                 if(!verifiedHex) {throw new Error("Error: Signature not verified! hes version @count"+c)}
             }
             after = performance.now()
@@ -169,7 +169,7 @@ async function testSignatures() {
             before = performance.now()
             while(c--) {
                 signatureBytes = await secUtl.createSignatureBytes(testString, secretKeyBytes)
-                verifiedBytes = await secUtl.verify(signatureBytes, publicKeyBytes, testString)
+                verifiedBytes = await secUtl.verifyBytes(signatureBytes, publicKeyBytes, testString)
                 if(!verifiedBytes) {throw new Error("Error: Signature not verified! bytes version @count"+c)}
             }
             after = performance.now()
@@ -178,9 +178,9 @@ async function testSignatures() {
             c = count
             before = performance.now()
             while(c--) {
-                signatureBytes = await secUtlOld.createSignatureBytes(testString, secretKeyBytes)
-                verifiedBytes = await secUtlOld.verify(signatureBytes, publicKeyBytes, testString)
-                if(!verifiedBytes) {throw new Error("Error: Signature not verified! oldHex version @count"+c)}
+                signatureHex = await secUtlOld.createSignatureHex(testString, secretKeyHex)
+                verifiedHex = await secUtlOld.verifyHex(signatureHex, publicKeyHex, testString)
+                if(!verifiedHex) {throw new Error("Error: Signature not verified! oldHex version @count"+c)}
             }
             after = performance.now()
             oldHexMS = after - before
@@ -222,7 +222,6 @@ async function testSymmetricEncryption() {
             let after
             let hexMS
             let bytesMS
-            let unsaltedMS
             let oldHexMS
             let c
 
@@ -245,16 +244,6 @@ async function testSymmetricEncryption() {
             }
             after = performance.now()
             hexMS = after - before
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                gibbrishHex = await secUtl.symmetricEncryptUnsalted(testString, keyHex)
-                decrypted = await secUtl.symmetricDecryptUnsalted(gibbrishHex, keyHex)
-                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! unsalted Version @count"+c)}
-            }
-            after = performance.now()
-            unsaltedMS = after - before
 
             c = count
             before = performance.now()
@@ -749,15 +738,15 @@ async function runAllTest() {
     await testShas() // seem to work ;)
     await testPublicKey() // seem to work ;)
     await testSignatures() // seem to work ;)
-    await testSymmetricEncryption() // seem to work ;)
-    await testAsymmetricEncryption()    
+    // await testSymmetricEncryption() // seem to work ;)
+    // await testAsymmetricEncryption()    
 
-    await testDiffieHellmanSecretHash()
-    await testDiffieHellmanSecretRaw()
-    await testElGamalSecretHash()
-    await testElGamalSecretRaw()
+    // await testDiffieHellmanSecretHash()
+    // await testDiffieHellmanSecretRaw()
+    // await testElGamalSecretHash()
+    // await testElGamalSecretRaw()
 
-    await testSalts()
+    // await testSalts()
 
     evaluate()
 

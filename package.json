@@ -56,6 +56,7 @@
         "old-secret-manager-crypto-utils": "npm:secret-manager-crypto-utils@^0.2.0",
         "older-secret-manager-crypto-utils": "npm:secret-manager-crypto-utils@^0.1.1",
         "thingy-allmodules-sync": "^0.2.0",
+        "thingy-byte-utils": "^0.0.8",
         "thingy-debug": "^0.0.1",
         "thingy-module-gen": "^0.1.6",
         "thingymodulecreate": "^0.1.8",
