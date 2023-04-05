@@ -1,6 +1,8 @@
 import * as secUtl from "../output/index.js"
 import { performance } from "perf_hooks"
 import constructionmodule from "thingymodulecreate/constructionmodule.js"
+import * as secUtlOld from "old-secret-manager-crypto-utils"
+import * as secUtlOlder from "older-secret-manager-crypto-utils"
 
 const results = {}
 
@@ -146,6 +148,7 @@ async function testSignatures() {
             let success = true
             let hexMS = 0
             let bytesMS = 0
+            let oldHexMS = 0
             let before = 0
             let after = 0
             let c = 0
@@ -156,7 +159,7 @@ async function testSignatures() {
             while(c--) {
                 signatureHex = await secUtl.createSignatureHex(testString, secretKeyHex)
                 verifiedHex = await secUtl.verify(signatureHex, publicKeyHex, testString)
-                if(!verifiedHex) {throw new Error("Error: Signature not verified! verifiedHex @count"+c)}
+                if(!verifiedHex) {throw new Error("Error: Signature not verified! hes version @count"+c)}
             }
             after = performance.now()
             hexMS = after - before
@@ -167,13 +170,23 @@ async function testSignatures() {
             while(c--) {
                 signatureBytes = await secUtl.createSignatureBytes(testString, secretKeyBytes)
                 verifiedBytes = await secUtl.verify(signatureBytes, publicKeyBytes, testString)
-                if(!verifiedBytes) {throw new Error("Error: Signature not verified! verifiedBytes @count"+c)}
+                if(!verifiedBytes) {throw new Error("Error: Signature not verified! bytes version @count"+c)}
             }
             after = performance.now()
             bytesMS = after - before
 
+            c = count
+            before = performance.now()
+            while(c--) {
+                signatureBytes = await secUtlOld.createSignatureBytes(testString, secretKeyBytes)
+                verifiedBytes = await secUtlOld.verify(signatureBytes, publicKeyBytes, testString)
+                if(!verifiedBytes) {throw new Error("Error: Signature not verified! oldHex version @count"+c)}
+            }
+            after = performance.now()
+            oldHexMS = after - before
 
-            results.testSignatures= {success, hexMS, bytesMS}
+
+            results.testSignatures= {success, hexMS, bytesMS, oldHexMS}
 
         } else {
             let error =  "Error: Signature not verified"
@@ -210,6 +223,7 @@ async function testSymmetricEncryption() {
             let hexMS
             let bytesMS
             let unsaltedMS
+            let oldHexMS
             let c
 
             c = count
@@ -217,7 +231,7 @@ async function testSymmetricEncryption() {
             while(c--) {
                 gibbrishBytes = await secUtl.symmetricEncryptBytes(testString, keyBytes)    
                 decrypted = await secUtl.symmetricDecryptBytes(gibbrishBytes, keyBytes)
-                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! bytesVersion @count"+c)}
+                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! bytes version @count"+c)}
             }
             after = performance.now()
             bytesMS = after - before
@@ -227,7 +241,7 @@ async function testSymmetricEncryption() {
             while(c--) {
                 gibbrishHex = await secUtl.symmetricEncryptHex(testString, keyHex)
                 decrypted = await secUtl.symmetricDecrypt(gibbrishHex, keyHex)
-                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! hexVersion @count"+c)}
+                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! hex version @count"+c)}
             }
             after = performance.now()
             hexMS = after - before
@@ -237,13 +251,23 @@ async function testSymmetricEncryption() {
             while(c--) {
                 gibbrishHex = await secUtl.symmetricEncryptUnsalted(testString, keyHex)
                 decrypted = await secUtl.symmetricDecryptUnsalted(gibbrishHex, keyHex)
-                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! unsaltedVersion @count"+c)}
+                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! unsalted Version @count"+c)}
             }
             after = performance.now()
             unsaltedMS = after - before
 
+            c = count
+            before = performance.now()
+            while(c--) {
+                gibbrishHex = await secUtlOld.symmetricEncrypt(testString, keyHex)
+                decrypted = await secUtlOld.symmetricDecrypt(gibbrishHex, keyHex)
+                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! oldHex Version @count"+c)}
+            }
+            after = performance.now()
+            oldHexMS = after - before
 
-            results.testSymmetricEncryption = {success, hexMS, bytesMS, unsaltedMS}
+
+            results.testSymmetricEncryption = {success, hexMS, bytesMS, unsaltedMS, oldHexMS}
         } else {
             results.testSymmetricEncryption = "Error: Decrypted did not match original content!"
         }
@@ -275,6 +299,8 @@ async function testAsymmetricEncryption() {
             let after
             let hexMS
             let bytesMS
+            let oldHexMS
+            let olderHexMS
             let c
 
 
@@ -283,6 +309,7 @@ async function testAsymmetricEncryption() {
             while(c--) {
                 secretsObject = await secUtl.asymmetricEncryptHex(testString, publicKeyHex)
                 decrypted = await secUtl.asymmetricDecryptHex(secretsObject, secretKeyHex)
+                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! hex Version @count"+c)}
             }
             after = performance.now()
             hexMS = after - before
@@ -291,13 +318,34 @@ async function testAsymmetricEncryption() {
             before = performance.now()
             while(c--) {
                 secretsObject = await secUtl.asymmetricEncryptBytes(testString, publicKeyBytes)
-                decrypted = await secUtl.asymmetricDecryptBytes(secretsObject, secretKeyBytes)        
+                decrypted = await secUtl.asymmetricDecryptBytes(secretsObject, secretKeyBytes)
+                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! bytes Version @count"+c)}
             }
             after = performance.now()
             bytesMS = after - before
 
+            c = count
+            before = performance.now()
+            while(c--) {
+                secretsObject = await secUtlOld.asymmetricEncryptBytes(testString, publicKeyBytes)
+                decrypted = await secUtlOld.asymmetricDecryptBytes(secretsObject, secretKeyBytes)
+                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! oldHex Version @count"+c)}
+            }
+            after = performance.now()
+            oldHexMS = after - before
 
-            results.testAsymmetricEncryption = {success, hexMS, bytesMS}
+            c = count
+            before = performance.now()
+            while(c--) {
+                secretsObject = await secUtlOlder.asymmetricEncryptBytes(testString, publicKeyBytes)
+                decrypted = await secUtlOlder.asymmetricDecryptBytes(secretsObject, secretKeyBytes)
+                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! olderHex Version @count"+c)}
+            }
+            after = performance.now()
+            olderHexMS = after - before
+
+
+            results.testAsymmetricEncryption = {success, hexMS, bytesMS, oldHexMS, olderHexMS}
         } else {
             var error = "Error: Decrypted did not match original content!"
             results.testAsymmetricEncryption = {error, hexMatched, bytesMatched} 
@@ -405,6 +453,7 @@ async function testDiffieHellmanSecretHash() {
         let after
         let hexMS
         let bytesMS
+        let oldHexMS
         let c
 
         c = count
@@ -412,6 +461,7 @@ async function testDiffieHellmanSecretHash() {
         while(c--) {
             sharedSecretAliceHex = await secUtl.diffieHellmanSecretHashHex(alicePrivHex, bobPubHex, context)
             sharedSecretBobHex = await secUtl.diffieHellmanSecretHashHex(bobPrivHex, alicePubHex, context)
+            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! oldHex version @count"+c)}        
         }
         after = performance.now()
         hexMS = after - before
@@ -421,10 +471,22 @@ async function testDiffieHellmanSecretHash() {
         while(c--) {
             sharedSecretAliceBytes = await secUtl.diffieHellmanSecretHashBytes(alicePrivBytes, bobPubBytes, context)
             sharedSecretBobBytes = await secUtl.diffieHellmanSecretHashBytes(bobPrivBytes, alicePubBytes, context)
+            if(sharedSecretAliceBytes.toString("hex") != sharedSecretBobBytes.toString("hex")) { throw new Error("Shared Secrets did not Match! oldHex version @count"+c)}
         }
         after = performance.now()
         bytesMS = after - before
-        results.diffieHellmanSecretHash = {success, hexMS, bytesMS}
+
+        c = count
+        before = performance.now()
+        while(c--) {
+            sharedSecretAliceHex = await secUtlOld.createSharedSecretHashHex(alicePrivHex, bobPubHex, context)
+            sharedSecretBobHex = await secUtlOld.createSharedSecretHashHex(bobPrivHex, alicePubHex, context)
+            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! oldHex version @count"+c)}
+        }
+        after = performance.now()
+        oldHexMS = after - before
+
+        results.diffieHellmanSecretHash = {success, hexMS, bytesMS, oldHexMS}
 
     } catch(error) {
         results.diffieHellmanSecretHash = error.message
@@ -466,6 +528,7 @@ async function testDiffieHellmanSecretRaw() {
         let after
         let hexMS
         let bytesMS
+        let oldHexMS
         let c
 
         c = count
@@ -473,6 +536,7 @@ async function testDiffieHellmanSecretRaw() {
         while(c--) {
             sharedSecretAliceHex = await secUtl.diffieHellmanSecretRawHex(alicePrivHex, bobPubHex)
             sharedSecretBobHex = await secUtl.diffieHellmanSecretRawHex(bobPrivHex, alicePubHex)
+            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! hex version @count"+c)}
         }
         after = performance.now()
         hexMS = after - before
@@ -482,11 +546,22 @@ async function testDiffieHellmanSecretRaw() {
         while(c--) {
             sharedSecretAliceBytes = await secUtl.diffieHellmanSecretRawBytes(alicePrivBytes, bobPubBytes)
             sharedSecretBobBytes = await secUtl.diffieHellmanSecretRawBytes(bobPrivBytes, alicePubBytes)
+            if(sharedSecretAliceBytes.toString("hex") != sharedSecretBobBytes.toString("hex")) { throw new Error("Shared Secrets did not Match! bytes version @count"+c)}
         }
         after = performance.now()
         bytesMS = after - before
-        results.diffieHellmanSecretRaw = {success, hexMS, bytesMS}
 
+        c = count
+        before = performance.now()
+        while(c--) {
+            sharedSecretAliceHex = await secUtlOld.createSharedSecretRawHex(alicePrivHex, bobPubHex)
+            sharedSecretBobHex = await secUtlOld.createSharedSecretRawHex(bobPrivHex, alicePubHex)
+            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! oldHex version @count"+c)}
+        }
+        after = performance.now()
+        oldHexMS = after - before
+
+        results.diffieHellmanSecretRaw = {success, hexMS, bytesMS, oldHexMS}
     } catch(error) {
         results.diffieHellmanSecretRaw = error.message
     }
@@ -532,13 +607,17 @@ async function testElGamalSecretHash() {
         let after
         let hexMS
         let bytesMS
+        let oldHexMS
         let c
 
         c = count
         before = performance.now()
         while(c--) {
             sharedSecretAliceHex = await secUtl.elGamalSecretHashHex(bobPubHex, context)
-            sharedSecretBobHex = await secUtl.elGamalSecretHashHex(alicePubHex, context)
+            referencePointHex = referencedHex.referencePointHex
+            sharedSecretAliceHex = referencedHex.sharedSecretHex
+            sharedSecretBobHex = await secUtl.diffieHellmanSecretHashHex(bobPrivHex, referencePointHex, context)
+            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! hex version @count"+c)}
         }
         after = performance.now()
         hexMS = after - before
@@ -547,11 +626,28 @@ async function testElGamalSecretHash() {
         before = performance.now()
         while(c--) {
             sharedSecretAliceBytes = await secUtl.elGamalSecretHashBytes(bobPubBytes, context)
-            sharedSecretBobBytes = await secUtl.elGamalSecretHashBytes(alicePubBytes, context)
+            referencePointBytes = referencedBytes.referencePointBytes
+            sharedSecretAliceBytes = referencedBytes.sharedSecretBytes
+            sharedSecretBobBytes = await secUtl.diffieHellmanSecretHashBytes(bobPrivBytes, referencePointBytes, context)
+            if(sharedSecretAliceBytes.toString("hex") != sharedSecretBobBytes.toString("hex")) { throw new Error("Shared Secrets did not Match! hex version @count"+c) }
         }
         after = performance.now()
         bytesMS = after - before
-        results.elGamalSecretHash = {success, hexMS, bytesMS}
+
+
+        c = count
+        before = performance.now()
+        while(c--) {
+            sharedSecretAliceHex = await secUtlOld.referencedSharedSecretHashHex(bobPubHex, context)
+            referencePointHex = sharedSecretAliceHex.referencePointHex
+            sharedSecretAliceHex = sharedSecretAliceHex.sharedSecretHex
+            sharedSecretBobHex = await secUtlOld.createSharedSecretHashHex(bobPrivHex, referencePointHex, context)
+            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! oldHex version @count"+c)}
+        }
+        after = performance.now()
+        oldHexMS = after - before
+
+        results.elGamalSecretHash = {success, hexMS, bytesMS, oldHexMS}
 
     } catch(error) {
         results.elGamalSecretHash = error.message
@@ -598,13 +694,17 @@ async function testElGamalSecretRaw() {
         let after
         let hexMS
         let bytesMS
+        let oldHexMS
         let c
 
         c = count
         before = performance.now()
         while(c--) {
-            sharedSecretAliceHex = await secUtl.elGamalSecretRawHex(bobPubHex, context)
-            sharedSecretBobHex = await secUtl.elGamalSecretRawHex(alicePubHex, context)
+            sharedSecretAliceHex = await secUtl.elGamalSecretRawHex(bobPubHex)
+            referencePointHex = sharedSecretAliceHex.referencePointHex
+            sharedSecretAliceHex = sharedSecretAliceHex.sharedSecretHex
+            sharedSecretBobHex = await secUtl.diffieHellmanSecretRawHex(bobPrivHex, referencePointHex)
+            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! hex version @count"+c)}
         }
         after = performance.now()
         hexMS = after - before
@@ -612,12 +712,28 @@ async function testElGamalSecretRaw() {
         c = count
         before = performance.now()
         while(c--) {
-            sharedSecretAliceBytes = await secUtl.elGamalSecretRawBytes(bobPubBytes, context)
-            sharedSecretBobBytes = await secUtl.elGamalSecretRawBytes(alicePubBytes, context)
+            sharedSecretAliceBytes = await secUtl.elGamalSecretRawBytes(bobPubBytes)
+            referencePointBytes = sharedSecretAliceBytes.referencePointBytes
+            sharedSecretAliceBytes = sharedSecretAliceBytes.sharedSecretBytes
+            sharedSecretBobBytes = await secUtl.diffieHellmanSecretRawBytes(bobPrivBytes, referencePointBytes)
+            if(sharedSecretAliceBytes.toString("hex") != sharedSecretBobBytes.toString("hex")) { throw new Error("Shared Secrets did not Match! bytes version @count"+c)}
         }
         after = performance.now()
         bytesMS = after - before
-        results.elGamalSecretRaw = {success, hexMS, bytesMS}
+
+        c = count
+        before = performance.now()
+        while(c--) {
+            sharedSecretAliceHex = await secUtlOld.referencedSharedSecretRawHex(bobPubHex)
+            referencePointHex = sharedSecretAliceHex.referencePointHex
+            sharedSecretAliceHex = sharedSecretAliceHex.sharedSecretHex
+            sharedSecretBobHex = await secUtlOld.createSharedSecretRawHex(bobPrivHex, referencePointHex)
+            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! oldHex version @count"+c)}
+        }
+        after = performance.now()
+        oldHexMS = after - before
+
+        results.elGamalSecretRaw = {success, hexMS, bytesMS, oldHexMS}
 
     } catch(error) {
         results.elGamalSecretRaw = error.message
@@ -627,7 +743,7 @@ async function testElGamalSecretRaw() {
 
 //############################################################
 async function runAllTest() {
-    await testShas() // get rid fresh start performance regression
+    await testSignatures() // get rid fresh start performance regression
 
     // real tests
     await testShas() // seem to work ;)
