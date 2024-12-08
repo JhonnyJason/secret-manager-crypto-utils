@@ -1,7 +1,7 @@
 {
     "files.exclude": {
         "**/node_modules": true,
-        "toolset/build/": true,
-        "output/*": true
+        "toolset/build/": false,
+        "output/*": false
     }
 }
