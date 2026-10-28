@@ -9,6 +9,8 @@ const m = await import("../output/index.js")
 const hexToBytes = (h) => new Uint8Array(Buffer.from(h, "hex"))
 const bytesToHex = (b) => Buffer.from(b).toString("hex")
 const { alice, bob, symKeyHex } = fx
+// verifySignature resolves undefined when valid, an error string otherwise
+const invalid = async (p, msg) => assert.equal(typeof await p, "string", msg)
 
 test(`sha256/sha512 match v0.3.1`, async () => {
     for (const s of fx.sha) {
@@ -22,11 +24,50 @@ test(`sha256/sha512 match v0.3.1`, async () => {
 test(`signatures match v0.3.1 and verify`, async () => {
     for (const s of fx.signatures) {
         assert.equal(await m.createSignatureHex(s.content, alice.secretKeyHex), s.sigHex)
-        assert.equal(await m.verifyHex(s.sigHex, alice.publicKeyHex, s.content), true)
-        assert.equal(await m.verifyBytes(hexToBytes(s.sigHex), hexToBytes(alice.publicKeyHex), s.content), true)
-        assert.equal(await m.verifyHex(s.sigHex, bob.publicKeyHex, s.content), false)
-        assert.equal(await m.verifyHex(s.sigHex, alice.publicKeyHex, s.content + "!"), false)
+        assert.equal(await m.verifySignatureHex(s.sigHex, alice.publicKeyHex, s.content), undefined)
+        assert.equal(await m.verifySignature(s.sigHex, alice.publicKeyHex, s.content), undefined)
+        assert.equal(await m.verifySignatureBytes(hexToBytes(s.sigHex), hexToBytes(alice.publicKeyHex), s.content), undefined)
+        assert.equal(await m.verifySignatureHex(s.sigHex, bob.publicKeyHex, s.content), "Invalid signature!")
+        assert.equal(await m.verifySignatureHex(s.sigHex, alice.publicKeyHex, s.content + "!"), "Invalid signature!")
+        const otherSig = await m.createSignatureHex(s.content + "!", alice.secretKeyHex)
+        assert.equal(await m.verifySignatureHex(otherSig, alice.publicKeyHex, s.content), "Invalid signature!")
     }
+    assert.equal(m.verify, undefined)
+    assert.equal(m.verifyHex, undefined)
+    assert.equal(m.verifyBytes, undefined)
+})
+
+test(`verifySignature never rejects on malformed input`, async () => {
+    const { sigHex, content } = fx.signatures[0]
+    const sig = hexToBytes(sigHex), key = hexToBytes(alice.publicKeyHex)
+    const hexCases = [
+        ["zz".repeat(64), alice.publicKeyHex, content],
+        [sigHex, alice.publicKeyHex + "x", content],
+        [sigHex.slice(2), alice.publicKeyHex, content],
+        [sigHex, alice.publicKeyHex.slice(2), content],
+        [sigHex, alice.publicKeyHex, "a\uD800b"],
+        [null, alice.publicKeyHex, content],
+        [sigHex, 42, content],
+        [sigHex, alice.publicKeyHex, 42],
+        [sigHex, alice.publicKeyHex, undefined],
+    ]
+    for (const [i, args] of hexCases.entries()) assert.equal(await m.verifySignatureHex(...args), "Malformed input!", `hex ${i}`)
+    const bytesCases = [
+        [new Uint8Array(63), key, content],
+        [sig, new Uint8Array(31), content],
+        [sigHex, key, content],
+        [sig, alice.publicKeyHex, content],
+        [sig, key, "x\uD83D"],
+        [undefined, undefined, undefined],
+    ]
+    for (const [i, args] of bytesCases.entries()) await invalid(m.verifySignatureBytes(...args), `bytes ${i}`)
+})
+
+test(`verifySignature without await is truthy (fails closed)`, async () => {
+    const { sigHex, content } = fx.signatures[0]
+    const p = m.verifySignatureHex(sigHex, alice.publicKeyHex, content)
+    assert.ok(p)
+    assert.equal(await p, undefined)
 })
 
 test(`public key derivation`, async () => {
@@ -193,7 +234,6 @@ test(`invalid hex is rejected`, async () => {
         await assert.rejects(async () => m.createPublicKeyHex(bad), SyntaxError, String(bad))
     }
     await assert.rejects(async () => m.symmetricDecryptHex("0g", symKeyHex), SyntaxError)
-    await assert.rejects(async () => m.verifyHex("00", alice.publicKeyHex + "x", "c"), SyntaxError)
 })
 
 test(`symmetric keys shorter than 48 bytes are rejected`, async () => {
@@ -214,7 +254,6 @@ test(`symmetric decrypt rejects non-Uint8Array input with TypeError`, async () =
 
 test(`ed25519 lengths are enforced (noble)`, async () => {
     await assert.rejects(m.createSignatureBytes("c", new Uint8Array(31)), RangeError)
-    await assert.rejects(m.verifyBytes(new Uint8Array(63), hexToBytes(alice.publicKeyHex), "c"), RangeError)
     await assert.rejects(m.diffieHellmanSecretRawBytes(new Uint8Array(33), hexToBytes(bob.publicKeyHex)), RangeError)
 })
 
@@ -259,7 +298,7 @@ const smallOrder = [
 test(`small-order public keys are rejected`, async () => {
     for (const p of smallOrder) {
         // R = identity, S = 0 verifies any message under zip215 with a small-order key
-        assert.equal(await m.verifyHex(smallOrder[0] + "00".repeat(32), p, "anything"), false, p)
+        await invalid(m.verifySignatureHex(smallOrder[0] + "00".repeat(32), p, "anything"), p)
         await assert.rejects(m.diffieHellmanSecretRawHex(bob.secretKeyHex, p), RangeError, p)
         await assert.rejects(m.diffieHellmanSecretHashHex(bob.secretKeyHex, p, "ctx"), RangeError)
         await assert.rejects(m.elGamalSecretRawHex(p), RangeError)
@@ -283,15 +322,15 @@ test(`public keys with a torsion component are rejected`, async () => {
     await assert.rejects(m.asymmetricDecryptHex({ ...s, referencePointHex: bobPlusT8 }, bob.secretKeyHex), RangeError)
 })
 
-test(`verify is strict: non-canonical encodings and malleable S rejected`, async () => {
+test(`verifySignature is strict: non-canonical encodings and malleable S rejected`, async () => {
     const s = fx.signatures[1]
     // identity with y = p + 1, only decodable in zip215 mode
-    assert.equal(await m.verifyHex(smallOrder[0] + "00".repeat(32), "ee" + "ff".repeat(30) + "7f", "anything"), false)
+    await invalid(m.verifySignatureHex(smallOrder[0] + "00".repeat(32), "ee" + "ff".repeat(30) + "7f", "anything"))
     // S + L: same signature in a second encoding
     const L = 2n ** 252n + 27742317777372353535851937790883648493n
     const S = BigInt("0x" + Buffer.from(s.sigHex.slice(64), "hex").reverse().toString("hex"))
     const sPlusL = Buffer.from((S + L).toString(16).padStart(64, "0"), "hex").reverse().toString("hex")
-    assert.equal(await m.verifyHex(s.sigHex.slice(0, 64) + sPlusL, alice.publicKeyHex, s.content), false)
+    await invalid(m.verifySignatureHex(s.sigHex.slice(0, 64) + sPlusL, alice.publicKeyHex, s.content))
 })
 
 test(`non-ASCII and large content roundtrip`, async () => {
@@ -299,7 +338,7 @@ test(`non-ASCII and large content roundtrip`, async () => {
     for (const c of contents) {
         assert.equal(await m.symmetricDecryptHex(await m.symmetricEncryptHex(c, symKeyHex), symKeyHex), c)
         assert.equal(await m.asymmetricDecryptHex(await m.asymmetricEncryptHex(c, bob.publicKeyHex), bob.secretKeyHex), c)
-        assert.equal(await m.verifyHex(await m.createSignatureHex(c, alice.secretKeyHex), alice.publicKeyHex, c), true)
+        assert.equal(await m.verifySignatureHex(await m.createSignatureHex(c, alice.secretKeyHex), alice.publicKeyHex, c), undefined)
     }
 })
 
@@ -308,7 +347,6 @@ test(`lone surrogates are rejected`, async () => {
         await assert.rejects(m.symmetricEncryptHex(bad, symKeyHex), TypeError)
         await assert.rejects(m.asymmetricEncryptHex(bad, bob.publicKeyHex), TypeError)
         await assert.rejects(m.createSignatureHex(bad, alice.secretKeyHex), TypeError)
-        await assert.rejects(m.verifyHex(fx.signatures[0].sigHex, alice.publicKeyHex, bad), TypeError)
         await assert.rejects(m.sha256Hex(bad), TypeError)
         await assert.rejects(m.diffieHellmanSecretHashHex(alice.secretKeyHex, bob.publicKeyHex, bad), TypeError)
         await assert.rejects(m.deriveSymKeyFromPassword(bad, "00".repeat(16), 1000), TypeError)
@@ -335,7 +373,7 @@ test(`uppercase hex is accepted`, async () => {
     assert.equal(await m.symmetricDecryptHex(g.toUpperCase(), symKeyHex.toUpperCase()), "x")
     assert.equal(await m.createPublicKeyHex(alice.secretKeyHex.toUpperCase()), alice.publicKeyHex)
     const s = fx.signatures[0]
-    assert.equal(await m.verifyHex(s.sigHex.toUpperCase(), alice.publicKeyHex.toUpperCase(), s.content), true)
+    assert.equal(await m.verifySignatureHex(s.sigHex.toUpperCase(), alice.publicKeyHex.toUpperCase(), s.content), undefined)
 })
 
 test(`every Hex function rejects invalid hex`, async () => {
@@ -343,8 +381,6 @@ test(`every Hex function rejects invalid hex`, async () => {
     const calls = [
         () => m.createPublicKeyHex(bad),
         () => m.createSignatureHex("c", bad),
-        () => m.verifyHex(bad, alice.publicKeyHex, "c"),
-        () => m.verifyHex(fx.signatures[0].sigHex, bad, "c"),
         () => m.symmetricEncryptHex("c", bad + bad),
         () => m.symmetricDecryptHex(bad, symKeyHex),
         () => m.symmetricDecryptHex("00", bad + bad),
