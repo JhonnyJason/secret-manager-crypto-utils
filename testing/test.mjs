@@ -1,791 +1,342 @@
-import * as secUtl from "../output/index.js"
-import { performance } from "perf_hooks"
-import constructionmodule from "thingymodulecreate/constructionmodule.js"
-import * as secUtlOld from "secret-manager-crypto-utils"
-import * as secUtlOlder from "secret-manager-crypto-utils-old"
+// run: node --test testing/
+import { test } from "node:test"
+import assert from "node:assert/strict"
+import fs from "node:fs"
+import { pbkdf2Sync } from "node:crypto"
 
-const results = {}
-const testString = "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^"
-const count = 1000
+const fx = JSON.parse(fs.readFileSync(new URL("./fixtures/v0.3.1.json", import.meta.url), "utf8"))
+const m = await import("../output/index.js")
+const hexToBytes = (h) => new Uint8Array(Buffer.from(h, "hex"))
+const bytesToHex = (b) => Buffer.from(b).toString("hex")
+const { alice, bob, symKeyHex } = fx
 
-
-
-//############################################################
-async function testShas() {
-    try {
-        var sha256Hex = await secUtl.sha256Hex(testString)
-        var sha256Bytes = await secUtl.sha256Bytes(testString)    
-        var sha256BytesOld = await secUtlOld.sha256Bytes(testString)
-
-
-        var sha512Hex = await secUtl.sha512Hex(testString)
-        var sha512Bytes = await secUtl.sha512Bytes(testString)    
-        var sha512BytesOld = await secUtlOld.sha512Bytes(testString)
-
-        var isMatch256 = sha256Hex == Buffer.from(sha256Bytes).toString("hex")
-        var isMatch256Old = sha256Hex == Buffer.from(sha256BytesOld).toString("hex")
-        var isMatch512 = sha512Hex == Buffer.from(sha512Bytes).toString("hex")
-        var isMatch512Old = sha512Hex == Buffer.from(sha512BytesOld).toString("hex")
-    
-        if (!isMatch256Old || !isMatch512Old) {
-            throw new Error("Sha of new version did not match latest version.")
-        }
-
-        if(isMatch256 && isMatch512) {
-
-            let success = true
-            let sha256HexMS = 0
-            let sha256BytesMS = 0
-            let sha512HexMS = 0
-            let sha512BytesMS = 0
-            let before = 0
-            let after = 0
-            let c = 0
-            
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                sha512Hex = await secUtl.sha512Hex(testString)
-            }
-            after = performance.now()
-            sha512HexMS = after - before
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                sha512Bytes = await secUtl.sha512Bytes(testString)
-            }
-            after = performance.now()
-            sha512BytesMS = after - before
-
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                sha256Hex = await secUtl.sha256Hex(testString)
-            }
-            after = performance.now()
-            sha256HexMS = after - before
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                sha256Bytes = await secUtl.sha256Bytes(testString)
-            }
-            after = performance.now()
-            sha256BytesMS = after - before            
-
-
-            results.testShas = { success, sha256HexMS, sha256BytesMS, sha512HexMS, sha512BytesMS }
-    
-        } else {
-            results.testShas="Error! Hex did not match the bytes version."
-        }
-    
-    } catch(error) {
-        results.testShas=error.message
+test(`sha256/sha512 match v0.3.1`, async () => {
+    for (const s of fx.sha) {
+        assert.equal(await m.sha256Hex(s.content), s.sha256Hex)
+        assert.equal(await m.sha512Hex(s.content), s.sha512Hex)
+        assert.equal(bytesToHex(await m.sha256Bytes(s.content)), s.sha256Hex)
+        assert.equal(bytesToHex(await m.sha512Bytes(s.content)), s.sha512Hex)
     }
-}
+})
 
-//############################################################
-async function testPublicKey() {
-    try {
-        var keyPairHex = await secUtl.createKeyPairHex()
-        // console.log(keyPairHex.publicKeyHex)
-
-        var keyPairBytes = await secUtl.createKeyPairBytes()
-        // console.log(JSON.stringify(keyPairHex, null, 4))
-        // console.log(JSON.stringify(keyPairBytes, null, 4))
-        var pubHex = await secUtl.createPublicKeyHex(keyPairHex.secretKeyHex)
-        var pubHexOld = await secUtlOld.createPublicKeyHex(keyPairHex.secretKeyHex)
-        var pubBytes = await secUtl.createPublicKeyBytes(keyPairBytes.secretKeyBytes)
-
-        var isMatchHex = keyPairHex.publicKeyHex == pubHex
-        var isMatchOld = keyPairHex.publicKeyHex == pubHexOld
-        var isMatchBytes = JSON.stringify(keyPairBytes.publicKeyBytes) == JSON.stringify(pubBytes)
-        
-        if(!isMatchOld) {
-            throw new Error("Public key did not match with public key of latest vesion!")
-        }
-
-        if(isMatchHex && isMatchBytes) {
-
-            let success = true
-            let hexMS = 0
-            let bytesMS = 0
-            let before = 0
-            let after = 0
-            let c = 0
-            
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                pubHex = await secUtl.createPublicKeyHex(keyPairHex.secretKeyHex)
-            }
-            after = performance.now()
-            hexMS = after - before
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                pubBytes = await secUtl.createPublicKeyBytes(keyPairBytes.secretKeyBytes)
-            }
-            after = performance.now()
-            bytesMS = after - before            
-
-            results.testPublicKey = { success, bytesMS, hexMS }
-    
-        } else {
-            results.testPublicKey="Error! New generated PublicKey did not match autogenerated."
-        }
-    
-    } catch(error) {
-        results.testPublicKey=error.message
+test(`signatures match v0.3.1 and verify`, async () => {
+    for (const s of fx.signatures) {
+        assert.equal(await m.createSignatureHex(s.content, alice.secretKeyHex), s.sigHex)
+        assert.equal(await m.verifyHex(s.sigHex, alice.publicKeyHex, s.content), true)
+        assert.equal(await m.verifyBytes(hexToBytes(s.sigHex), hexToBytes(alice.publicKeyHex), s.content), true)
+        assert.equal(await m.verifyHex(s.sigHex, bob.publicKeyHex, s.content), false)
+        assert.equal(await m.verifyHex(s.sigHex, alice.publicKeyHex, s.content + "!"), false)
     }
-}
+})
 
-//############################################################
-async function testSignatures() {
+test(`public key derivation`, async () => {
+    assert.equal(await m.createPublicKeyHex(alice.secretKeyHex), alice.publicKeyHex)
+    assert.equal(bytesToHex(await m.createPublicKeyBytes(hexToBytes(alice.secretKeyHex))), alice.publicKeyHex)
+})
 
-    try {
-        var { secretKeyBytes, publicKeyBytes } = await secUtl.createKeyPairBytes()
-        var { secretKeyHex, publicKeyHex } = await secUtl.createKeyPairHex()
+test(`key generation shapes`, async () => {
+    const kp = await m.createKeyPairHex()
+    assert.match(kp.secretKeyHex, /^[0-9a-f]{64}$/)
+    assert.equal(await m.createPublicKeyHex(kp.secretKeyHex), kp.publicKeyHex)
+    assert.match(await m.createSymKeyHex(), /^[0-9a-f]{96}$/)
+    assert.equal((await m.createSymKeyBytes()).length, 48)
+})
 
-        var signatureBytes = await secUtl.createSignatureBytes(testString, secretKeyBytes)
-        var verifiedBytes = await secUtl.verifyBytes(signatureBytes, publicKeyBytes, testString)
-        var verifiedOld = await secUtlOld.verifyBytes(signatureBytes, publicKeyBytes, testString)
-
-        var signatureHex = await secUtl.createSignatureHex(testString, secretKeyHex)
-        var verifiedHex = await secUtl.verifyHex(signatureHex, publicKeyHex, testString)
-
-        if (!verifiedOld) {
-            throw new Error("Latest version could not verify current versions' signature!")
-        }
-
-        if(verifiedBytes && verifiedHex) {
-            let success = true
-            let hexMS = 0
-            let bytesMS = 0
-            let oldHexMS = 0
-            let before = 0
-            let after = 0
-            let c = 0
-
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                signatureHex = await secUtl.createSignatureHex(testString, secretKeyHex)
-                verifiedHex = await secUtl.verifyHex(signatureHex, publicKeyHex, testString)
-                if(!verifiedHex) {throw new Error("Error: Signature not verified! hes version @count"+c)}
-            }
-            after = performance.now()
-            hexMS = after - before
-
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                signatureBytes = await secUtl.createSignatureBytes(testString, secretKeyBytes)
-                verifiedBytes = await secUtl.verifyBytes(signatureBytes, publicKeyBytes, testString)
-                if(!verifiedBytes) {throw new Error("Error: Signature not verified! bytes version @count"+c)}
-            }
-            after = performance.now()
-            bytesMS = after - before
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                signatureHex = await secUtlOld.createSignatureHex(testString, secretKeyHex)
-                verifiedHex = await secUtlOld.verifyHex(signatureHex, publicKeyHex, testString)
-                if(!verifiedHex) {throw new Error("Error: Signature not verified! oldHex version @count"+c)}
-            }
-            after = performance.now()
-            oldHexMS = after - before
-
-
-            results.testSignatures= {success, hexMS, bytesMS, oldHexMS}
-
-        } else {
-            let error =  "Error: Signature not verified"
-            results.testSignatures = {error, verifiedBytes, verifiedHex}
-        }
-
-    } catch(error) {
-        results.testSignatures=error.message
+test(`legacy symmetric ciphertext decrypts`, async () => {
+    for (const s of fx.symmetric) {
+        assert.equal(await m.symmetricDecryptHex(s.gibbrishHex, symKeyHex), s.content, `${s.build}/${s.variant}`)
+        assert.equal(await m.symmetricDecryptBytes(hexToBytes(s.gibbrishHex), hexToBytes(symKeyHex)), s.content)
     }
+})
 
-}
-
-//############################################################
-async function testSymmetricEncryption() {
-
-    try {
-        var keyHex = await secUtl.createSymKeyHex()
-    
-        var gibbrishHex = await secUtl.symmetricEncryptHex(testString, keyHex)    
-        var decrypted = await secUtl.symmetricDecrypt(gibbrishHex, keyHex)
-        
-        var hexMatched = decrypted == testString
-
-        var keyBytes = await secUtl.createSymKeyBytes()
-        var gibbrishBytes = await secUtl.symmetricEncryptBytes(testString, keyBytes)    
-        decrypted = await secUtl.symmetricDecryptBytes(gibbrishBytes, keyBytes)
-        var decryptedOld = await secUtlOld.symmetricDecryptBytes(gibbrishBytes, keyBytes)
-
-        if(decrypted != decryptedOld) {throw new Error("Latest version not compatible with the current version!")}
-
-        var bytesMatched = decrypted == testString
-
-        if(hexMatched && bytesMatched){
-            let success = true
-            let before
-            let after
-            let hexMS
-            let bytesMS
-            let oldHexMS
-            let c
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                gibbrishBytes = await secUtl.symmetricEncryptBytes(testString, keyBytes)
-
-                decrypted = await secUtl.symmetricDecryptBytes(gibbrishBytes, keyBytes)
-                
-                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! bytes version @count"+c)}
-                
-            }
-            after = performance.now()
-            bytesMS = after - before
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                gibbrishHex = await secUtl.symmetricEncryptHex(testString, keyHex)
-                decrypted = await secUtl.symmetricDecrypt(gibbrishHex, keyHex)
-                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! hex version @count"+c)}
-            }
-            after = performance.now()
-            hexMS = after - before
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                gibbrishHex = await secUtlOld.symmetricEncrypt(testString, keyHex)
-                decrypted = await secUtlOld.symmetricDecrypt(gibbrishHex, keyHex)
-                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! oldHex Version @count"+c)}
-            }
-            after = performance.now()
-            oldHexMS = after - before
-
-
-            results.testSymmetricEncryption = {success, hexMS, bytesMS, oldHexMS}
-        } else {
-            results.testSymmetricEncryption = "Error: Decrypted did not match original content!"
-        }
-    } catch(error) {
-        results.testSymmetricEncryption = error.message
+test(`legacy asymmetric secrets decrypt`, async () => {
+    for (const s of fx.asymmetric) {
+        const { referencePointHex, encryptedContentHex } = s
+        assert.equal(await m.asymmetricDecryptHex({ referencePointHex, encryptedContentHex }, bob.secretKeyHex), s.content, `${s.build}/${s.variant}`)
+        const secrets = { referencePointBytes: hexToBytes(referencePointHex), encryptedContentBytes: hexToBytes(encryptedContentHex) }
+        assert.equal(await m.asymmetricDecryptBytes(secrets, hexToBytes(bob.secretKeyHex)), s.content)
     }
-}
+})
 
-//############################################################
-async function testAsymmetricEncryption() {
-
-    try {
-        var { secretKeyHex, publicKeyHex } = await secUtl.createKeyPairHex()
-        var { secretKeyBytes, publicKeyBytes } = await secUtl.createKeyPairBytes()
-        
-        var secretsObject = await secUtl.asymmetricEncryptHex(testString, publicKeyHex)
-        var decrypted = await secUtl.asymmetricDecryptHex(secretsObject, secretKeyHex)
-        var hexMatched = decrypted == testString
-        var decryptedOld =  await secUtlOld.asymmetricDecryptHex(secretsObject, secretKeyHex)
-        
-        if(decrypted != decryptedOld) {
-            throw new Error("Current version is not compatible with the latest version.")
-        }
-            
-        secretsObject = await secUtl.asymmetricEncryptBytes(testString, publicKeyBytes)
-        decrypted = await secUtl.asymmetricDecryptBytes(secretsObject, secretKeyBytes)
-        var bytesMatched = decrypted == testString
-
-
-        if(hexMatched && bytesMatched){
-            let success = true
-            let before
-            let after
-            let hexMS
-            let bytesMS
-            let oldHexMS
-            let olderHexMS
-            let c
-
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                secretsObject = await secUtl.asymmetricEncryptHex(testString, publicKeyHex)
-                decrypted = await secUtl.asymmetricDecryptHex(secretsObject, secretKeyHex)
-                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! hex Version @count"+c)}
-            }
-            after = performance.now()
-            hexMS = after - before
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                secretsObject = await secUtl.asymmetricEncryptBytes(testString, publicKeyBytes)
-                decrypted = await secUtl.asymmetricDecryptBytes(secretsObject, secretKeyBytes)
-                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! bytes Version @count"+c)}
-            }
-            after = performance.now()
-            bytesMS = after - before
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                secretsObject = await secUtlOld.asymmetricEncryptBytes(testString, publicKeyBytes)
-                decrypted = await secUtlOld.asymmetricDecryptBytes(secretsObject, secretKeyBytes)
-                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! oldHex Version @count"+c)}
-            }
-            after = performance.now()
-            oldHexMS = after - before
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                secretsObject = await secUtlOlder.asymmetricEncryptBytes(testString, publicKeyBytes)
-                decrypted = await secUtlOlder.asymmetricDecryptBytes(secretsObject, secretKeyBytes)
-                if(decrypted != testString) {throw new Error("Error: Decrypted did not match original content! olderHex Version @count"+c)}
-            }
-            after = performance.now()
-            olderHexMS = after - before
-
-
-            results.testAsymmetricEncryption = {success, hexMS, bytesMS, oldHexMS, olderHexMS}
-        } else {
-            var error = "Error: Decrypted did not match original content!"
-            results.testAsymmetricEncryption = {error, hexMatched, bytesMatched} 
-        }
-    } catch(error) {
-        results.testAsymmetricEncryption = error.message
+test(`symmetric roundtrip, randomized`, async () => {
+    const keyBytes = hexToBytes(symKeyHex)
+    for (const c of fx.contents) {
+        const a = await m.symmetricEncryptHex(c, symKeyHex)
+        assert.notEqual(a, await m.symmetricEncryptHex(c, symKeyHex))
+        assert.equal(await m.symmetricDecryptHex(a, symKeyHex), c)
+        assert.equal(await m.symmetricDecryptBytes(await m.symmetricEncryptBytes(c, keyBytes), keyBytes), c)
     }
+})
 
-}
-
-//############################################################
-async function testSalts() {
-
-    try {
-
-        // var content = "aaaaa"
-        var content = testString
-        // console.log("content: "+content)
-        var saltedContent = secUtl.saltContent(content)
- 
-        // console.log(JSON.stringify(saltedContent, null, 4))
-        // console.log("saltedContent: "+saltedContent)
-        var unsaltedContent = secUtl.unsaltContent(saltedContent)
-        var unsaltedContentOld = secUtlOld.unsaltContent(saltedContent)
-
-        if(unsaltedContent != unsaltedContentOld) {
-            throw new Error("Current version not compatible with latest version!")
-        }
-        // console.log("unsaltedContent: "+unsaltedContent)
-        
-        // console.log(typeof content)
-        // console.log(content.length)
-        // console.log(typeof unsaltedContent)
-        // console.log(unsaltedContent.length)
-
-        if(content == unsaltedContent) {
-            console.log("Inside positive IF")
-            let success = true
-            let before
-            let after
-            let saltMS
-            let c
-
-
-            c = count
-            before = performance.now()
-            while(c--) {
-                saltedContent = secUtl.saltContent(content)
-                unsaltedContent = secUtl.unsaltContent(saltedContent)
-                if(content != unsaltedContent) {
-                    console.log(JSON.stringify(Uint8Array.from(saltedContent)))
-                    console.log("unsaltedContent: "+unsaltedContent)
-                    throw new Error("Error on NewSalt: Unsalted content did not match original content!")
-                }
-            }
-            after = performance.now()
-            saltMS = after - before
-
-            results.testSalts = {success, saltMS}
-        } else {
-            console.log("Inside negative ELSE")
-
-            var error = "Error: Unsalted content did not match original content!"
-            // unsaltedContent = Uint8Array.from(unsaltedContent)
-            results.testSalts = {error, content, unsaltedContent, unsaltedContentOld} 
-        }
-    } catch(error) {
-        results.testSalts=error.message
+test(`asymmetric roundtrip`, async () => {
+    for (const c of fx.contents) {
+        const s = await m.asymmetricEncryptHex(c, bob.publicKeyHex)
+        assert.equal(await m.asymmetricDecryptHex(s, bob.secretKeyHex), c)
+        const sb = await m.asymmetricEncryptBytes(c, hexToBytes(bob.publicKeyHex))
+        assert.equal(await m.asymmetricDecryptBytes(sb, hexToBytes(bob.secretKeyHex)), c)
     }
+})
 
-}
-
-//############################################################
-async function testDiffieHellmanSecretHash() {
-
-    try {
-        var kpBytes = await secUtl.createKeyPairBytes()
-        var alicePrivBytes = kpBytes.secretKeyBytes
-        var alicePubBytes = kpBytes.publicKeyBytes
-        kpBytes = await secUtl.createKeyPairBytes()
-        var bobPrivBytes = kpBytes.secretKeyBytes
-        var bobPubBytes = kpBytes.publicKeyBytes
-
-        var alicePrivHex = Buffer.from(alicePrivBytes).toString("hex")
-        var alicePubHex = Buffer.from(alicePubBytes).toString("hex")
-        var bobPrivHex = Buffer.from(bobPrivBytes).toString("hex")
-        var bobPubHex = Buffer.from(bobPubBytes).toString("hex")
-
-        var context = "test.extensivlyon.coffee/ultra-context"
-
-        var sharedSecretAliceHex = await secUtl.diffieHellmanSecretHashHex(alicePrivHex, bobPubHex, context)
-        var sharedSecretBobHex = await secUtl.diffieHellmanSecretHashHex(bobPrivHex, alicePubHex, context)
-        if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error(`Hex Shared Secrets did not match!\n sharedSecretAliceHex: ${sharedSecretAliceHex}\nsharedSecretBobHex: ${sharedSecretBobHex}`)}
-
-
-        var sharedSecretAliceBytes = await secUtl.diffieHellmanSecretHashBytes(alicePrivBytes, bobPubBytes, context)
-        var sharedSecretBobBytes = await secUtl.diffieHellmanSecretHashBytes(bobPrivBytes, alicePubBytes, context)
-        if(sharedSecretAliceBytes.toString("hex") != sharedSecretBobBytes.toString("hex")) { throw new Error(`Bytes Shared Secrets did not match!\n sharedSecretAliceBytes: ${sharedSecretAliceBytes}\nsharedSecretBobBytes: ${sharedSecretBobBytes}`)}
-        
-        
-        var compHex = sharedSecretBobBytes.toString("hex")
-        if(sharedSecretAliceHex != compHex){ throw new Error(`Hex version of Bytes Secret did not match the original Hex version!\ncompHex: ${compHex}\nsharedSecretAliceHex: ${sharedSecretAliceHex}`)}
-
-        let success = true
-        let before
-        let after
-        let hexMS
-        let bytesMS
-        let oldHexMS
-        let c
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            sharedSecretAliceHex = await secUtl.diffieHellmanSecretHashHex(alicePrivHex, bobPubHex, context)
-            sharedSecretBobHex = await secUtl.diffieHellmanSecretHashHex(bobPrivHex, alicePubHex, context)
-            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! oldHex version @count"+c)}        
-        }
-        after = performance.now()
-        hexMS = after - before
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            sharedSecretAliceBytes = await secUtl.diffieHellmanSecretHashBytes(alicePrivBytes, bobPubBytes, context)
-            sharedSecretBobBytes = await secUtl.diffieHellmanSecretHashBytes(bobPrivBytes, alicePubBytes, context)
-            if(sharedSecretAliceBytes.toString("hex") != sharedSecretBobBytes.toString("hex")) { throw new Error("Shared Secrets did not Match! oldHex version @count"+c)}
-        }
-        after = performance.now()
-        bytesMS = after - before
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            sharedSecretAliceHex = await secUtlOld.diffieHellmanSecretHashHex(alicePrivHex, bobPubHex, context)
-            sharedSecretBobHex = await secUtlOld.diffieHellmanSecretHashHex(bobPrivHex, alicePubHex, context)
-            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! oldHex version @count"+c)}
-        }
-        after = performance.now()
-        oldHexMS = after - before
-
-        results.diffieHellmanSecretHash = {success, hexMS, bytesMS, oldHexMS}
-
-    } catch(error) {
-        results.diffieHellmanSecretHash = error.message
+test(`diffie-hellman matches v0.3.1, both sides agree`, async () => {
+    for (const d of fx.diffieHellman) {
+        assert.equal(await m.diffieHellmanSecretHashHex(alice.secretKeyHex, bob.publicKeyHex, d.context), d.hashHex)
+        assert.equal(await m.diffieHellmanSecretHashHex(bob.secretKeyHex, alice.publicKeyHex, d.context), d.hashHex)
+        assert.equal(await m.diffieHellmanSecretRawHex(bob.secretKeyHex, alice.publicKeyHex), d.rawHex)
+        const hb = await m.diffieHellmanSecretHashBytes(hexToBytes(alice.secretKeyHex), hexToBytes(bob.publicKeyHex), d.context)
+        assert.equal(bytesToHex(hb), d.hashHex)
     }
+})
 
-}
-
-//############################################################
-async function testDiffieHellmanSecretRaw() {
-
-    try {
-        var kpBytes = await secUtl.createKeyPairBytes()
-        var alicePrivBytes = kpBytes.secretKeyBytes
-        var alicePubBytes = kpBytes.publicKeyBytes
-        kpBytes = await secUtl.createKeyPairBytes()
-        var bobPrivBytes = kpBytes.secretKeyBytes
-        var bobPubBytes = kpBytes.publicKeyBytes
-
-        var alicePrivHex = Buffer.from(alicePrivBytes).toString("hex")
-        var alicePubHex = Buffer.from(alicePubBytes).toString("hex")
-        var bobPrivHex = Buffer.from(bobPrivBytes).toString("hex")
-        var bobPubHex = Buffer.from(bobPubBytes).toString("hex")
-
-        var sharedSecretAliceHex = await secUtl.diffieHellmanSecretRawHex(alicePrivHex, bobPubHex)
-        var sharedSecretBobHex = await secUtl.diffieHellmanSecretRawHex(bobPrivHex, alicePubHex)
-        if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error(`Hex Shared Secrets did not match!\n sharedSecretAliceHex: ${sharedSecretAliceHex}\nsharedSecretBobHex: ${sharedSecretBobHex}`)}
-
-
-        var sharedSecretAliceBytes = await secUtl.diffieHellmanSecretRawBytes(alicePrivBytes, bobPubBytes)
-        var sharedSecretBobBytes = await secUtl.diffieHellmanSecretRawBytes(bobPrivBytes, alicePubBytes)
-        if(sharedSecretAliceBytes.toString("hex") != sharedSecretBobBytes.toString("hex")) { throw new Error(`Bytes Shared Secrets did not match!\n sharedSecretAliceBytes: ${sharedSecretAliceBytes}\nsharedSecretBobBytes: ${sharedSecretBobBytes}`)}
-        
-        
-        var compHex = Buffer.from(sharedSecretBobBytes).toString("hex")
-        if(sharedSecretAliceHex != compHex){ throw new Error(`Hex version of Bytes Secret did not match the original Hex version!\ncompHex: ${compHex}\nsharedSecretAliceHex: ${sharedSecretAliceHex}`)}
-
-        let success = true
-        let before
-        let after
-        let hexMS
-        let bytesMS
-        let oldHexMS
-        let c
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            sharedSecretAliceHex = await secUtl.diffieHellmanSecretRawHex(alicePrivHex, bobPubHex)
-            sharedSecretBobHex = await secUtl.diffieHellmanSecretRawHex(bobPrivHex, alicePubHex)
-            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! hex version @count"+c)}
-        }
-        after = performance.now()
-        hexMS = after - before
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            sharedSecretAliceBytes = await secUtl.diffieHellmanSecretRawBytes(alicePrivBytes, bobPubBytes)
-            sharedSecretBobBytes = await secUtl.diffieHellmanSecretRawBytes(bobPrivBytes, alicePubBytes)
-            if(sharedSecretAliceBytes.toString("hex") != sharedSecretBobBytes.toString("hex")) { throw new Error("Shared Secrets did not Match! bytes version @count"+c)}
-        }
-        after = performance.now()
-        bytesMS = after - before
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            sharedSecretAliceHex = await secUtlOld.diffieHellmanSecretRawHex(alicePrivHex, bobPubHex)
-            sharedSecretBobHex = await secUtlOld.diffieHellmanSecretRawHex(bobPrivHex, alicePubHex)
-            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! oldHex version @count"+c)}
-        }
-        after = performance.now()
-        oldHexMS = after - before
-
-        results.diffieHellmanSecretRaw = {success, hexMS, bytesMS, oldHexMS}
-    } catch(error) {
-        results.diffieHellmanSecretRaw = error.message
+test(`legacy elGamal secrets are recoverable by the receiver`, async () => {
+    for (const e of fx.elGamal) {
+        const recovered = e.kind == "hash"
+            ? await m.diffieHellmanSecretHashHex(bob.secretKeyHex, e.referencePointHex, e.context)
+            : await m.diffieHellmanSecretRawHex(bob.secretKeyHex, e.referencePointHex)
+        assert.equal(recovered, e.sharedSecretHex, `${e.build}/${e.kind}/${e.context}`)
     }
+})
 
-}
+// v0.3.1 bug: Bytes variants ignored byteOffset (handoff)
+test(`symmetric key as subarray view with byteOffset`, async () => {
+    const padded = new Uint8Array(64)
+    padded.set(hexToBytes(symKeyHex), 16)
+    const key = padded.subarray(16)
+    const c = fx.contents[2]
+    // decrypt with a plain copy: a roundtrip through the same view would hide the bug
+    assert.equal(await m.symmetricDecryptBytes(await m.symmetricEncryptBytes(c, key), hexToBytes(symKeyHex)), c)
+    assert.equal(await m.symmetricDecryptBytes(hexToBytes(fx.symmetric[0].gibbrishHex), key), fx.symmetric[0].content)
+})
 
 //############################################################
-async function testElGamalSecretHash() {
+// format v1: 0x01 ‖ nonce(12) ‖ GCM( padLen(1) ‖ content ‖ random(padLen) ) ‖ tag(16)
+const keyBytes = hexToBytes(symKeyHex)
+const encrypt = (c) => m.symmetricEncryptBytes(c, keyBytes)
+const rejects = (bytes, key = keyBytes) => assert.rejects(m.symmetricDecryptBytes(bytes, key), /Decryption failed/)
 
-    try {
-        var kpBytes = await secUtl.createKeyPairBytes()
-        var alicePrivBytes = kpBytes.secretKeyBytes
-        var alicePubBytes = kpBytes.publicKeyBytes
-        kpBytes = await secUtl.createKeyPairBytes()
-        var bobPrivBytes = kpBytes.secretKeyBytes
-        var bobPubBytes = kpBytes.publicKeyBytes
-
-        var alicePrivHex = Buffer.from(alicePrivBytes).toString("hex")
-        var alicePubHex = Buffer.from(alicePubBytes).toString("hex")
-        var bobPrivHex = Buffer.from(bobPrivBytes).toString("hex")
-        var bobPubHex = Buffer.from(bobPubBytes).toString("hex")
-
-        var context = "test.extensivlyon.coffee/ultra-context"
-
-        var referencedHex = await secUtl.elGamalSecretHashHex(bobPubHex, context)
-        var referencePointHex = referencedHex.referencePointHex
-        var sharedSecretAliceHex = referencedHex.sharedSecretHex
-
-        var sharedSecretBobHex = await secUtl.diffieHellmanSecretHashHex(bobPrivHex, referencePointHex, context)
-        if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error(`Hex Shared Secrets did not match!\n sharedSecretAliceHex: ${sharedSecretAliceHex}\nsharedSecretBobHex: ${sharedSecretBobHex}`)}
-
-
-        var referencedBytes = await secUtl.elGamalSecretHashBytes(bobPubBytes, context)
-        var referencePointBytes = referencedBytes.referencePointBytes
-        var sharedSecretAliceBytes = referencedBytes.sharedSecretBytes
-
-        var sharedSecretBobBytes = await secUtl.diffieHellmanSecretHashBytes(bobPrivBytes, referencePointBytes, context)
-        if(Buffer.from(sharedSecretAliceBytes).toString("hex") != Buffer.from(sharedSecretBobBytes).toString("hex")) { throw new Error(`Bytes Shared Secrets did not match!\n sharedSecretAliceBytes: ${sharedSecretAliceBytes}\nsharedSecretBobBytes: ${sharedSecretBobBytes}`)}
-        
-        
-        let success = true
-        let before
-        let after
-        let hexMS
-        let bytesMS
-        let oldHexMS
-        let c
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            sharedSecretAliceHex = await secUtl.elGamalSecretHashHex(bobPubHex, context)
-            referencePointHex = referencedHex.referencePointHex
-            sharedSecretAliceHex = referencedHex.sharedSecretHex
-            sharedSecretBobHex = await secUtl.diffieHellmanSecretHashHex(bobPrivHex, referencePointHex, context)
-            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! hex version @count"+c)}
-        }
-        after = performance.now()
-        hexMS = after - before
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            sharedSecretAliceBytes = await secUtl.elGamalSecretHashBytes(bobPubBytes, context)
-            referencePointBytes = referencedBytes.referencePointBytes
-            sharedSecretAliceBytes = referencedBytes.sharedSecretBytes
-            sharedSecretBobBytes = await secUtl.diffieHellmanSecretHashBytes(bobPrivBytes, referencePointBytes, context)
-            if(sharedSecretAliceBytes.toString("hex") != sharedSecretBobBytes.toString("hex")) { throw new Error("Shared Secrets did not Match! hex version @count"+c) }
-        }
-        after = performance.now()
-        bytesMS = after - before
-
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            sharedSecretAliceHex = await secUtlOld.elGamalSecretHashHex(bobPubHex, context)
-            referencePointHex = sharedSecretAliceHex.referencePointHex
-            sharedSecretAliceHex = sharedSecretAliceHex.sharedSecretHex
-            sharedSecretBobHex = await secUtlOld.diffieHellmanSecretHashHex(bobPrivHex, referencePointHex, context)
-            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! oldHex version @count"+c)}
-        }
-        after = performance.now()
-        oldHexMS = after - before
-
-        results.elGamalSecretHash = {success, hexMS, bytesMS, oldHexMS}
-
-    } catch(error) {
-        results.elGamalSecretHash = error.message
+test(`v1 layout and length bounds`, async () => {
+    for (const c of fx.contents) {
+        const contentLength = new TextEncoder().encode(c).length
+        const g = await encrypt(c)
+        assert.equal(g[0], 0x01)
+        const padLength = g.length - (1 + 12 + 16 + 1 + contentLength)
+        assert.ok(padLength >= 0 && padLength <= 255, `padLength ${padLength}`)
     }
+})
 
-}
+test(`v1 padded lengths vary`, async () => {
+    const lengths = new Set()
+    for (let i = 0; i < 50; i++) lengths.add((await encrypt("a")).length)
+    assert.ok(lengths.size > 10, `only ${lengths.size} distinct lengths`)
+})
 
-//############################################################
-async function testElGamalSecretRaw() {
+test(`legacy ciphertext starting with 0x01 falls back to CBC`, async () => {
+    const prefixed = fx.symmetric.filter((s) => s.gibbrishHex.startsWith("01"))
+    assert.ok(prefixed.length > 0)
+    for (const s of prefixed) assert.equal(await m.symmetricDecryptHex(s.gibbrishHex, symKeyHex), s.content)
+})
 
-    try {
-        var kpBytes = await secUtl.createKeyPairBytes()
-        var alicePrivBytes = kpBytes.secretKeyBytes
-        var alicePubBytes = kpBytes.publicKeyBytes
-        kpBytes = await secUtl.createKeyPairBytes()
-        var bobPrivBytes = kpBytes.secretKeyBytes
-        var bobPubBytes = kpBytes.publicKeyBytes
-
-        var alicePrivHex = Buffer.from(alicePrivBytes).toString("hex")
-        var alicePubHex = Buffer.from(alicePubBytes).toString("hex")
-        var bobPrivHex = Buffer.from(bobPrivBytes).toString("hex")
-        var bobPubHex = Buffer.from(bobPubBytes).toString("hex")
-
-        var context = "test.extensivlyon.coffee/ultra-context"
-
-        var referencedHex = await secUtl.elGamalSecretRawHex(bobPubHex, context)
-        var referencePointHex = referencedHex.referencePointHex
-        var sharedSecretAliceHex = referencedHex.sharedSecretHex
-
-        var sharedSecretBobHex = await secUtl.diffieHellmanSecretRawHex(bobPrivHex, referencePointHex, context)
-        if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error(`Hex Shared Secrets did not match!\n sharedSecretAliceHex: ${sharedSecretAliceHex}\nsharedSecretBobHex: ${sharedSecretBobHex}`)}
-
-
-        var referencedBytes = await secUtl.elGamalSecretRawBytes(bobPubBytes, context)
-        var referencePointBytes = referencedBytes.referencePointBytes
-        var sharedSecretAliceBytes = referencedBytes.sharedSecretBytes
-
-        var sharedSecretBobBytes = await secUtl.diffieHellmanSecretRawBytes(bobPrivBytes, referencePointBytes, context)
-        if(Buffer.from(sharedSecretAliceBytes).toString("hex") != Buffer.from(sharedSecretBobBytes).toString("hex")) { throw new Error(`Bytes Shared Secrets did not match!\n sharedSecretAliceBytes: ${sharedSecretAliceBytes}\nsharedSecretBobBytes: ${sharedSecretBobBytes}`)}
-        
-        
-        let success = true
-        let before
-        let after
-        let hexMS
-        let bytesMS
-        let oldHexMS
-        let c
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            sharedSecretAliceHex = await secUtl.elGamalSecretRawHex(bobPubHex)
-            referencePointHex = sharedSecretAliceHex.referencePointHex
-            sharedSecretAliceHex = sharedSecretAliceHex.sharedSecretHex
-            sharedSecretBobHex = await secUtl.diffieHellmanSecretRawHex(bobPrivHex, referencePointHex)
-            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! hex version @count"+c)}
+test(`v1 any single bit flip is rejected`, async () => {
+    for (const c of ["", fx.contents[3]]) {
+        const g = await encrypt(c)
+        for (let bit = 0; bit < g.length * 8; bit++) {
+            const t = g.slice()
+            t[bit >> 3] ^= 1 << (bit & 7)
+            await rejects(t)
         }
-        after = performance.now()
-        hexMS = after - before
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            sharedSecretAliceBytes = await secUtl.elGamalSecretRawBytes(bobPubBytes)
-            referencePointBytes = sharedSecretAliceBytes.referencePointBytes
-            sharedSecretAliceBytes = sharedSecretAliceBytes.sharedSecretBytes
-            sharedSecretBobBytes = await secUtl.diffieHellmanSecretRawBytes(bobPrivBytes, referencePointBytes)
-            if(sharedSecretAliceBytes.toString("hex") != sharedSecretBobBytes.toString("hex")) { throw new Error("Shared Secrets did not Match! bytes version @count"+c)}
-        }
-        after = performance.now()
-        bytesMS = after - before
-
-        c = count
-        before = performance.now()
-        while(c--) {
-            sharedSecretAliceHex = await secUtlOld.elGamalSecretRawHex(bobPubHex)
-            referencePointHex = sharedSecretAliceHex.referencePointHex
-            sharedSecretAliceHex = sharedSecretAliceHex.sharedSecretHex
-            sharedSecretBobHex = await secUtlOld.diffieHellmanSecretRawHex(bobPrivHex, referencePointHex)
-            if(sharedSecretAliceHex != sharedSecretBobHex) { throw new Error("Shared Secrets did not Match! oldHex version @count"+c)}
-        }
-        after = performance.now()
-        oldHexMS = after - before
-
-        results.elGamalSecretRaw = {success, hexMS, bytesMS, oldHexMS}
-
-    } catch(error) {
-        results.elGamalSecretRaw = error.message
     }
-}
+})
 
+test(`v1 truncation, wrong key and empty input are rejected`, async () => {
+    const g = await encrypt(fx.contents[2])
+    for (const cut of [1, 15, 16, g.length - 13, g.length - 1, g.length]) await rejects(g.subarray(0, g.length - cut))
+    const otherKey = keyBytes.slice()
+    otherKey[20] ^= 1
+    await rejects(g, otherKey)
+})
 
+test(`v1 ignores key bytes 0..15`, async () => {
+    const g = await encrypt(fx.contents[2])
+    const otherKey = keyBytes.slice()
+    otherKey.fill(0, 0, 16)
+    assert.equal(await m.symmetricDecryptBytes(g, otherKey), fx.contents[2])
+})
 
 //############################################################
-async function runAllTest() {
-    await testSalts() // get rid fresh start performance regression
+// KDF: PBKDF2-SHA256, 48 bytes
+test(`KDF matches PBKDF2-SHA256 known answer`, async () => {
+    const saltHex = "00112233445566778899aabbccddeeff"
+    const expected = pbkdf2Sync("correct horse", Buffer.from(saltHex, "hex"), 1000, 48, "sha256").toString("hex")
+    assert.deepEqual(await m.deriveSymKeyFromPassword("correct horse", saltHex, 1000), { keyHex: expected, saltHex, iterations: 1000 })
+})
 
-    // real tests
-    // await testShas() // seems to work ;)
-    // await testPublicKey() // seems to work ;)
-    // await testSignatures() // seems to work ;)
-    // await testSymmetricEncryption() // seems to work ;)
-    // await testAsymmetricEncryption() // seems to work ;-)
+test(`KDF defaults: random 16 byte salt, 600000 iterations, key works`, async () => {
+    const a = await m.deriveSymKeyFromPassword("pin1234")
+    assert.equal(a.iterations, 600000)
+    assert.match(a.saltHex, /^[0-9a-f]{32}$/)
+    assert.match(a.keyHex, /^[0-9a-f]{96}$/)
+    assert.notEqual(a.saltHex, (await m.deriveSymKeyFromPassword("pin1234", undefined, 1000)).saltHex)
+    assert.equal((await m.deriveSymKeyFromPassword("pin1234", a.saltHex)).keyHex, a.keyHex)
+    assert.equal(await m.symmetricDecryptHex(await m.symmetricEncryptHex("secret", a.keyHex), a.keyHex), "secret")
+})
 
-    // await testDiffieHellmanSecretHash() // seems to work ;-)
-    // await testDiffieHellmanSecretRaw() // seems to work ;-)
-    // await testElGamalSecretHash() //  seems to work ;-)
-    // await testElGamalSecretRaw() // seems to work ;-)
+test(`KDF normalizes unicode (NFC)`, async () => {
+    const salt = "00".repeat(16)
+    const composed = await m.deriveSymKeyFromPassword("café", salt, 1000)
+    const decomposed = await m.deriveSymKeyFromPassword("café", salt, 1000)
+    assert.equal(composed.keyHex, decomposed.keyHex)
+})
 
-    // await testSalts() // seems to work ;-)
+//############################################################
+// input validation at the boundary
+test(`invalid hex is rejected`, async () => {
+    for (const bad of ["abc", "zz".repeat(32), "0x" + "00".repeat(31), null, 42]) {
+        await assert.rejects(async () => m.createPublicKeyHex(bad), SyntaxError, String(bad))
+    }
+    await assert.rejects(async () => m.symmetricDecryptHex("0g", symKeyHex), SyntaxError)
+    await assert.rejects(async () => m.verifyHex("00", alice.publicKeyHex + "x", "c"), SyntaxError)
+})
 
-    evaluate()
+test(`symmetric keys shorter than 48 bytes are rejected`, async () => {
+    for (const len of [0, 32, 40, 47]) {
+        await assert.rejects(m.symmetricEncryptBytes("x", keyBytes.subarray(0, len)), RangeError, `len ${len}`)
+        await assert.rejects(m.symmetricDecryptBytes(await encrypt("x"), keyBytes.subarray(0, len)), RangeError)
+    }
+    await assert.rejects(m.symmetricEncryptBytes("x", undefined), RangeError)
+})
 
-}
+test(`ed25519 lengths are enforced (noble)`, async () => {
+    await assert.rejects(m.createSignatureBytes("c", new Uint8Array(31)), RangeError)
+    await assert.rejects(m.verifyBytes(new Uint8Array(63), hexToBytes(alice.publicKeyHex), "c"), RangeError)
+    await assert.rejects(m.diffieHellmanSecretRawBytes(new Uint8Array(33), hexToBytes(bob.publicKeyHex)), RangeError)
+})
 
-function evaluate() {
-    console.log(JSON.stringify(results, null, 4))
-}
+test(`KDF rejects bad iterations and salt`, async () => {
+    for (const it of [0, -1, 1.5, "1000"]) await assert.rejects(m.deriveSymKeyFromPassword("pw", "00".repeat(16), it), RangeError, String(it))
+    await assert.rejects(m.deriveSymKeyFromPassword("pw", "xyz", 1000), SyntaxError)
+})
 
-runAllTest()
+test(`asymmetric v1 tamper is rejected`, async () => {
+    const s = await m.asymmetricEncryptBytes(fx.contents[3], hexToBytes(bob.publicKeyHex))
+    s.encryptedContentBytes[20] ^= 1
+    await assert.rejects(m.asymmetricDecryptBytes(s, hexToBytes(bob.secretKeyHex)), /Decryption failed/)
+})
+
+test(`v1 nonces are fresh per message`, async () => {
+    const nonces = new Set()
+    for (let i = 0; i < 50; i++) nonces.add(bytesToHex((await encrypt("a")).subarray(1, 13)))
+    assert.equal(nonces.size, 50)
+})
+
+test(`v1 authentic but malformed padding is rejected`, async () => {
+    // seals arbitrary plaintext with the real key: only the padLen check can catch this
+    const key = await crypto.subtle.importKey("raw", keyBytes.subarray(16, 48), "AES-GCM", false, ["encrypt"])
+    const seal = async (plain) => {
+        const nonce = crypto.getRandomValues(new Uint8Array(12))
+        const sealed = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce }, key, plain))
+        return new Uint8Array([0x01, ...nonce, ...sealed])
+    }
+    assert.equal(await m.symmetricDecryptBytes(await seal(new Uint8Array([2, 104, 105, 0, 0])), keyBytes), "hi")
+    for (const plain of [[1], [5, 104, 105], [255]]) await rejects(await seal(new Uint8Array(plain)))
+})
+
+//############################################################
+// small-order points: identity, order 2, order 4, order 8
+const smallOrder = [
+    "01" + "00".repeat(31),
+    "ec" + "ff".repeat(30) + "7f",
+    "00".repeat(32),
+    "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05",
+]
+
+test(`small-order public keys are rejected`, async () => {
+    for (const p of smallOrder) {
+        // R = identity, S = 0 verifies any message under zip215 with a small-order key
+        assert.equal(await m.verifyHex(smallOrder[0] + "00".repeat(32), p, "anything"), false, p)
+        await assert.rejects(m.diffieHellmanSecretRawHex(bob.secretKeyHex, p), RangeError, p)
+        await assert.rejects(m.diffieHellmanSecretHashHex(bob.secretKeyHex, p, "ctx"), RangeError)
+        await assert.rejects(m.elGamalSecretRawHex(p), RangeError)
+        await assert.rejects(m.elGamalSecretHashHex(p, "ctx"), RangeError)
+        await assert.rejects(m.asymmetricEncryptHex("x", p), RangeError)
+        const s = await m.asymmetricEncryptHex("x", bob.publicKeyHex)
+        await assert.rejects(m.asymmetricDecryptHex({ ...s, referencePointHex: p }, bob.secretKeyHex), RangeError)
+    }
+})
+
+test(`verify is strict: non-canonical encodings and malleable S rejected`, async () => {
+    const s = fx.signatures[1]
+    // identity with y = p + 1, only decodable in zip215 mode
+    assert.equal(await m.verifyHex(smallOrder[0] + "00".repeat(32), "ee" + "ff".repeat(30) + "7f", "anything"), false)
+    // S + L: same signature in a second encoding
+    const L = 2n ** 252n + 27742317777372353535851937790883648493n
+    const S = BigInt("0x" + Buffer.from(s.sigHex.slice(64), "hex").reverse().toString("hex"))
+    const sPlusL = Buffer.from((S + L).toString(16).padStart(64, "0"), "hex").reverse().toString("hex")
+    assert.equal(await m.verifyHex(s.sigHex.slice(0, 64) + sPlusL, alice.publicKeyHex, s.content), false)
+})
+
+test(`non-ASCII and large content roundtrip`, async () => {
+    const contents = ["Grüße, Müßiggänger", "🔐🗝️👩‍👩‍👧", "秘密の鍵", "€".repeat(350000)]
+    for (const c of contents) {
+        assert.equal(await m.symmetricDecryptHex(await m.symmetricEncryptHex(c, symKeyHex), symKeyHex), c)
+        assert.equal(await m.asymmetricDecryptHex(await m.asymmetricEncryptHex(c, bob.publicKeyHex), bob.secretKeyHex), c)
+        assert.equal(await m.verifyHex(await m.createSignatureHex(c, alice.secretKeyHex), alice.publicKeyHex, c), true)
+    }
+})
+
+test(`lone surrogates are rejected`, async () => {
+    for (const bad of ["a\uD800b", "\uDC00", "x\uD83D"]) {
+        await assert.rejects(m.symmetricEncryptHex(bad, symKeyHex), TypeError)
+        await assert.rejects(m.asymmetricEncryptHex(bad, bob.publicKeyHex), TypeError)
+        await assert.rejects(m.createSignatureHex(bad, alice.secretKeyHex), TypeError)
+        await assert.rejects(m.verifyHex(fx.signatures[0].sigHex, alice.publicKeyHex, bad), TypeError)
+        await assert.rejects(m.sha256Hex(bad), TypeError)
+        await assert.rejects(m.diffieHellmanSecretHashHex(alice.secretKeyHex, bob.publicKeyHex, bad), TypeError)
+        await assert.rejects(m.deriveSymKeyFromPassword(bad, "00".repeat(16), 1000), TypeError)
+    }
+    await assert.rejects(m.symmetricEncryptBytes(new Uint8Array([1, 2]), keyBytes), TypeError)
+})
+
+test(`KDF rejects salts shorter than 16 bytes`, async () => {
+    for (const salt of ["", "00", "00".repeat(15)]) await assert.rejects(m.deriveSymKeyFromPassword("pw", salt, 1000), RangeError, salt)
+})
+
+test(`asymmetric referencePoint bit flips are rejected`, async () => {
+    const s = await m.asymmetricEncryptBytes(fx.contents[3], hexToBytes(bob.publicKeyHex))
+    for (let bit = 0; bit < 256; bit++) {
+        const referencePointBytes = s.referencePointBytes.slice()
+        referencePointBytes[bit >> 3] ^= 1 << (bit & 7)
+        await assert.rejects(m.asymmetricDecryptBytes({ ...s, referencePointBytes }, hexToBytes(bob.secretKeyHex)), `bit ${bit}`)
+    }
+})
+
+test(`uppercase hex is accepted`, async () => {
+    const g = await m.symmetricEncryptHex("x", symKeyHex)
+    assert.equal(await m.symmetricDecryptHex(g.toUpperCase(), symKeyHex.toUpperCase()), "x")
+    assert.equal(await m.createPublicKeyHex(alice.secretKeyHex.toUpperCase()), alice.publicKeyHex)
+    const s = fx.signatures[0]
+    assert.equal(await m.verifyHex(s.sigHex.toUpperCase(), alice.publicKeyHex.toUpperCase(), s.content), true)
+})
+
+test(`every Hex function rejects invalid hex`, async () => {
+    const bad = "zz".repeat(32)
+    const calls = [
+        () => m.createPublicKeyHex(bad),
+        () => m.createSignatureHex("c", bad),
+        () => m.verifyHex(bad, alice.publicKeyHex, "c"),
+        () => m.verifyHex(fx.signatures[0].sigHex, bad, "c"),
+        () => m.symmetricEncryptHex("c", bad + bad),
+        () => m.symmetricDecryptHex(bad, symKeyHex),
+        () => m.symmetricDecryptHex("00", bad + bad),
+        () => m.asymmetricEncryptHex("c", bad),
+        () => m.asymmetricDecryptHex({ referencePointHex: bad, encryptedContentHex: "00" }, bob.secretKeyHex),
+        () => m.asymmetricDecryptHex({ referencePointHex: alice.publicKeyHex, encryptedContentHex: bad }, bob.secretKeyHex),
+        () => m.asymmetricDecryptHex({ referencePointHex: alice.publicKeyHex, encryptedContentHex: "00" }, bad),
+        () => m.diffieHellmanSecretRawHex(bad, bob.publicKeyHex),
+        () => m.diffieHellmanSecretRawHex(alice.secretKeyHex, bad),
+        () => m.diffieHellmanSecretHashHex(bad, bob.publicKeyHex),
+        () => m.diffieHellmanSecretHashHex(alice.secretKeyHex, bad),
+        () => m.elGamalSecretRawHex(bad),
+        () => m.elGamalSecretHashHex(bad),
+        () => m.deriveSymKeyFromPassword("pw", bad, 1000),
+    ]
+    for (const [i, call] of calls.entries()) await assert.rejects(async () => call(), SyntaxError, `call ${i}`)
+})

@@ -1,0 +1,236 @@
+<!doctype html>
+<html data-theme="luxury" data-lavish-annotate="off" lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step 4 review</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, li, td, th, .badge) { overflow-wrap: anywhere; }
+  code { font-size: .85em; background: var(--color-base-300); padding: .05em .35em; border-radius: .3em; }
+  .finding:has(select option[value="fix"]:checked) { border-left: 4px solid var(--color-primary); }
+  .finding:has(select option[value="reject"]:checked) { opacity: .55; }
+  .diff { border-radius: .5rem; overflow: hidden; }
+</style>
+</head>
+<body class="bg-base-100 text-base-content">
+<main class="mx-auto max-w-5xl p-4 lg:p-10 space-y-10">
+
+<header class="space-y-3">
+  <div class="text-sm opacity-60">secret-manager-crypto-utils · Step 4 review · <code>sources/source/index/index.js</code></div>
+  <h1 class="text-4xl font-bold">Step 4: what still needs fixing</h1>
+  <p class="opacity-80 max-w-3xl">27/27 tests green on node. The GCM v1 core holds up: fresh nonce per message, the tag is checked before any plaintext comes out, and failures give one generic error.
+  The gaps are at the <b>edges</b>: keys and salts that should be rejected but aren't. Set a disposition for each item and tick the tests, then queue once at the bottom.</p>
+  <div class="stats stats-vertical lg:stats-horizontal bg-base-200 w-full">
+    <div class="stat"><div class="stat-title">Security</div><div class="stat-value text-error text-3xl">2</div><div class="stat-desc">one critical, one high, both confirmed by running them</div></div>
+    <div class="stat"><div class="stat-title">Correctness</div><div class="stat-value text-warning text-3xl">2</div><div class="stat-desc">empty salt, lone surrogates</div></div>
+    <div class="stat"><div class="stat-title">Hardening / docs</div><div class="stat-value text-3xl">4</div><div class="stat-desc">small or README-only</div></div>
+    <div class="stat"><div class="stat-title">Tests proposed</div><div class="stat-value text-3xl">8</div><div class="stat-desc">would catch each of the above</div></div>
+  </div>
+</header>
+
+<form id="review" class="space-y-10" data-lavish-question="step4-review" onsubmit="event.preventDefault(); submitReview(this)">
+
+<!-- ============================================================ -->
+<section class="space-y-4">
+  <h2 class="text-2xl font-bold">Security: small-order points</h2>
+  <p class="opacity-80 max-w-3xl text-sm">Ed25519 has 8 "small-order" points (identity, order 2, 4, 8). Multiplying one by a clamped secret scalar always lands on a public, known point. Nothing in our API rejects them.</p>
+
+  <!-- F1 -->
+  <div class="finding card bg-base-200" data-id="F1" data-label="verify: zip215:false (small-order key forges any signature)">
+    <div class="card-body space-y-3">
+      <div class="flex flex-wrap gap-2 items-center"><span class="badge badge-error">critical</span><h3 class="card-title">F1 · A small-order public key makes <code>verify</code> accept any message</h3></div>
+      <p class="text-sm">noble 3 <code>verifyAsync</code> defaults to <code>zip215: true</code> (cofactored, permissive). With <code>A = identity</code>, <code>R = identity</code>, <code>S = 0</code> the check passes for every content:</p>
+      <div class="mockup-code text-xs"><pre data-prefix="$"><code>verifyHex("01"+"00"*31 + "00"*32, "01"+"00"*31, "transfer all funds")</code></pre><pre data-prefix="&gt;" class="text-error"><code>true</code></pre></div>
+      <p class="text-sm"><b>Impact:</b> any system where users register their own public keys can be given a key that "signs" everything. <b>Fix:</b> strict RFC 8032 mode, which also rejects non-canonical encodings. index.js:77</p>
+      <div class="diff" id="d-f1"></div>
+      <div class="flex flex-wrap gap-2 items-center">
+        <select class="select select-sm w-auto" name="F1"><option value="fix" selected>fix now</option><option value="defer">defer</option><option value="doc">document only</option><option value="reject">reject</option></select>
+        <input class="input input-sm flex-1" name="F1-note" placeholder="note">
+      </div>
+    </div>
+  </div>
+
+  <!-- F2 -->
+  <div class="finding card bg-base-200" data-id="F2" data-label="reject small-order points in DH / ElGamal / asymmetric">
+    <div class="card-body space-y-3">
+      <div class="flex flex-wrap gap-2 items-center"><span class="badge badge-error">high</span><h3 class="card-title">F2 · Encrypting to a small-order key gives no secrecy</h3></div>
+      <div class="mockup-code text-xs">
+        <pre data-prefix="$"><code>diffieHellmanSecretRawHex(anySecret, identity | order2Point)</code></pre><pre data-prefix="&gt;" class="text-error"><code>"0100000000…00"   // same for every secret key</code></pre>
+        <pre data-prefix="$"><code>asymmetricEncryptHex("secret", identity)</code></pre><pre data-prefix="&gt;" class="text-error"><code>succeeds, AES key = sha512(0100…00), public</code></pre>
+      </div>
+      <p class="text-sm"><b>Impact:</b> a corrupted, zeroed or malicious recipient key turns encryption into plaintext, silently. A crafted <code>referencePoint</code> on decrypt does the same: anyone can build a ciphertext that "decrypts" for every recipient.
+      <b>Fix:</b> one helper, used by the two functions every path goes through, <code>diffieHellmanSecretRawBytes</code> and <code>elGamalSecretRawBytes</code>.</p>
+      <div class="diff" id="d-f2"></div>
+      <div class="flex flex-wrap gap-2 items-center">
+        <select class="select select-sm w-auto" name="F2"><option value="fix" selected>fix now</option><option value="defer">defer</option><option value="doc">document only</option><option value="reject">reject</option></select>
+        <input class="input input-sm flex-1" name="F2-note" placeholder="note">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="space-y-4">
+  <h2 class="text-2xl font-bold">Correctness</h2>
+  <div class="grid md:grid-cols-2 gap-4">
+
+    <div class="finding card bg-base-200" data-id="F3" data-label="KDF: salt must be >= 16 bytes">
+      <div class="card-body space-y-3">
+        <div class="flex flex-wrap gap-2 items-center"><span class="badge badge-warning">medium</span><h3 class="card-title text-lg">F3 · KDF accepts an empty salt</h3></div>
+        <p class="text-sm"><code>deriveSymKeyFromPassword("pw", "")</code> succeeds. Without a salt, one precomputation cracks every user's password at once. <b>Fix:</b> throw <code>RangeError</code> when the salt is shorter than 16 bytes. The minimum iteration count stays the caller's choice.</p>
+        <div class="flex flex-wrap gap-2 items-center">
+          <select class="select select-sm w-auto" name="F3"><option value="fix" selected>fix now</option><option value="defer">defer</option><option value="doc">document only</option><option value="reject">reject</option></select>
+          <input class="input input-sm flex-1" name="F3-note" placeholder="note">
+        </div>
+      </div>
+    </div>
+
+    <div class="finding card bg-base-200" data-id="F4" data-label="reject non-well-formed strings (lone surrogates)">
+      <div class="card-body space-y-3">
+        <div class="flex flex-wrap gap-2 items-center"><span class="badge badge-warning">medium</span><h3 class="card-title text-lg">F4 · Lone surrogates are silently replaced</h3></div>
+        <p class="text-sm"><code>encrypt("a\uD800b")</code> decrypts to <code>"a�b"</code>, so what comes back differs from what went in, with no error. <b>Fix:</b> in <code>padContent</code> and <code>createSignatureBytes</code>, throw <code>TypeError</code> unless <code>typeof content == "string" &amp;&amp; content.isWellFormed()</code> (available from Node 20, matching our engines field). The <code>TypeError</code> also gives a clearer message for non-string content.</p>
+        <div class="flex flex-wrap gap-2 items-center">
+          <select class="select select-sm w-auto" name="F4"><option value="fix" selected>fix now</option><option value="defer">defer</option><option value="doc">document only</option><option value="reject">reject</option></select>
+          <input class="input input-sm flex-1" name="F4-note" placeholder="note">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="space-y-4">
+  <h2 class="text-2xl font-bold">Hardening &amp; README</h2>
+  <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-200">
+    <table class="table">
+      <thead><tr><th>ID</th><th>What</th><th>Proposal</th><th>Disposition</th></tr></thead>
+      <tbody>
+        <tr class="finding" data-id="H1" data-label="unpadContent: !(end >= 1) guard">
+          <td><b>H1</b></td>
+          <td class="text-sm"><code>unpadContent</code>: <code>end &lt; 1</code> is false for <code>NaN</code>, which an empty plaintext produces. Today <code>V1_MIN_LENGTH</code> prevents that, but only by accident.</td>
+          <td class="text-sm">Write <code>!(end &gt;= 1)</code> instead (index.js:144). One character's worth of change, and the check holds on its own.</td>
+          <td><select class="select select-sm" name="H1"><option value="fix" selected>fix now</option><option value="defer">defer</option><option value="reject">reject</option></select></td>
+        </tr>
+        <tr class="finding" data-id="H2" data-label="README: legacy CBC padding-oracle residual">
+          <td><b>H2</b></td>
+          <td class="text-sm">The legacy CBC fallback leaks success or failure plus timing (padding check vs. salt check), so it's a possible padding oracle on <i>old</i> ciphertexts if a server decrypts input an attacker controls. In my run, 0 of 3000 random 64-byte inputs got through the fallback.</td>
+          <td class="text-sm">Same family as the risk we accepted in D5. Document it in Step 5 and re-encrypt old secrets soon.</td>
+          <td><select class="select select-sm" name="H2"><option value="doc" selected>document only</option><option value="fix">add opt-out flag</option><option value="reject">reject</option></select></td>
+        </tr>
+        <tr class="finding" data-id="H3" data-label="README: no key binding, not key-committing">
+          <td><b>H3</b></td>
+          <td class="text-sm">The asymmetric key is <code>sha512(lB)</code>, with no binding to A or B. GCM is not key-committing.</td>
+          <td class="text-sm">Fixing either breaks v0.3.1 compatibility, so document both in the README.</td>
+          <td><select class="select select-sm" name="H3"><option value="doc" selected>document only</option><option value="defer">defer to v0.5</option><option value="reject">reject</option></select></td>
+        </tr>
+        <tr class="finding" data-id="H4" data-label="verify bun + deno green before release">
+          <td><b>H4</b></td>
+          <td class="text-sm">I ran the suite on node only this round. bun and deno are untested.</td>
+          <td class="text-sm">Run all three after the fixes.</td>
+          <td><select class="select select-sm" name="H4"><option value="fix" selected>do it</option><option value="defer">at release</option></select></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="space-y-4">
+  <h2 class="text-2xl font-bold">Missing tests</h2>
+  <div class="card bg-base-200"><div class="card-body">
+    <div class="grid md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+      <label class="flex gap-2 items-start"><input type="checkbox" class="checkbox checkbox-sm" name="t" value="T1" data-label="small-order keys: verify false; DH/ElGamal/asym encrypt+decrypt throw" checked><span><b>T1</b> Small-order keys (identity, order-2 point): <code>verify</code> returns false, and every DH/ElGamal/asymmetric function throws, including a crafted <code>referencePoint</code> on decrypt <span class="badge badge-xs badge-error">F1 F2</span></span></label>
+      <label class="flex gap-2 items-start"><input type="checkbox" class="checkbox checkbox-sm" name="t" value="T2" data-label="non-canonical key / R rejected by verify" checked><span><b>T2</b> A non-canonical public key or R encoding is rejected by <code>verify</code>. Pins down <code>zip215:false</code> <span class="badge badge-xs badge-error">F1</span></span></label>
+      <label class="flex gap-2 items-start"><input type="checkbox" class="checkbox checkbox-sm" name="t" value="T3" data-label="non-ASCII + 1MB roundtrip (sym + asym)" checked><span><b>T3</b> Non-ASCII round trip: umlauts, emoji (surrogate pairs), CJK, plus about 1 MB of content, symmetric and asymmetric. <i>No current fixture is multi-byte.</i></span></label>
+      <label class="flex gap-2 items-start"><input type="checkbox" class="checkbox checkbox-sm" name="t" value="T4" data-label="lone surrogate rejected" checked><span><b>T4</b> A lone surrogate is rejected on encrypt and sign <span class="badge badge-xs badge-warning">F4</span></span></label>
+      <label class="flex gap-2 items-start"><input type="checkbox" class="checkbox checkbox-sm" name="t" value="T5" data-label="KDF salt < 16 bytes rejected" checked><span><b>T5</b> KDF rejects a salt shorter than 16 bytes <span class="badge badge-xs badge-warning">F3</span></span></label>
+      <label class="flex gap-2 items-start"><input type="checkbox" class="checkbox checkbox-sm" name="t" value="T6" data-label="asym referencePoint bit flip rejected" checked><span><b>T6</b> A bit flip in an asymmetric <code>referencePoint</code> is rejected. Today only the ciphertext is tampered</span></label>
+      <label class="flex gap-2 items-start"><input type="checkbox" class="checkbox checkbox-sm" name="t" value="T7" data-label="uppercase hex accepted" checked><span><b>T7</b> Uppercase hex is accepted, so the validation regex can't drift</span></label>
+      <label class="flex gap-2 items-start"><input type="checkbox" class="checkbox checkbox-sm" name="t" value="T8" data-label="every exported Hex fn rejects bad hex" checked><span><b>T8</b> Every exported <code>*Hex</code> function rejects bad hex. Today only three are covered</span></label>
+    </div>
+  </div></div>
+</section>
+
+<!-- ============================================================ -->
+<section class="card bg-base-300">
+  <div class="card-body space-y-3">
+    <h2 class="card-title">Anything I missed?</h2>
+    <textarea name="general" class="textarea w-full" rows="2" placeholder="general feedback, further concerns, priorities"></textarea>
+    <div class="flex flex-wrap gap-3 items-center justify-end">
+      <span id="summary" class="text-sm opacity-70"></span>
+      <button class="btn btn-primary">Queue review decisions</button>
+    </div>
+  </div>
+</section>
+</form>
+
+</main>
+
+<script type="module">
+  import { FileDiff } from "https://esm.sh/@pierre/diffs@1.2.10?bundle";
+  const options = { theme: { light: "github-light", dark: "github-dark" }, themeType: "dark", overflow: "wrap", diffStyle: "unified" };
+  const file = (contents) => ({ name: "sources/source/index/index.js", contents });
+  const render = (id, a, b) => new FileDiff(options).render({ containerWrapper: document.getElementById(id), oldFile: file(a), newFile: file(b) });
+  render("d-f1",
+`export const verifyBytes = (sigBytes, keyBytes, content) => ed.verifyAsync(sigBytes, tbut.utf8ToBytes(content), keyBytes)
+`,
+`// strict RFC 8032: zip215 would accept small-order keys that verify any message
+export const verifyBytes = (sigBytes, keyBytes, content) => ed.verifyAsync(sigBytes, tbut.utf8ToBytes(content), keyBytes, { zip215: false })
+`);
+  render("d-f2",
+`export const diffieHellmanSecretRawBytes = async (secretKeyBytes, publicKeyBytes) => {
+    const B = ed.Point.fromBytes(publicKeyBytes)
+    return B.multiply(await secretScalar(secretKeyBytes)).toBytes()
+}
+...
+export const elGamalSecretRawBytes = async (publicKeyBytes) => {
+    const B = ed.Point.fromBytes(publicKeyBytes)
+`,
+`// small-order points give a shared secret everybody knows
+const publicPoint = (bytes) => {
+    const P = ed.Point.fromBytes(bytes)
+    if (P.isSmallOrder()) throw new RangeError("Invalid public key!")
+    return P
+}
+
+export const diffieHellmanSecretRawBytes = async (secretKeyBytes, publicKeyBytes) => {
+    const B = publicPoint(publicKeyBytes)
+    return B.multiply(await secretScalar(secretKeyBytes)).toBytes()
+}
+...
+export const elGamalSecretRawBytes = async (publicKeyBytes) => {
+    const B = publicPoint(publicKeyBytes)
+`);
+</script>
+<script>
+const form = document.getElementById("review")
+const collect = () => {
+  const fd = new FormData(form)
+  const items = [...form.querySelectorAll(".finding")].map((el) => ({
+    id: el.dataset.id, label: el.dataset.label,
+    disposition: fd.get(el.dataset.id), note: (fd.get(el.dataset.id + "-note") || "").trim()
+  }))
+  const tests = [...form.querySelectorAll("input[name=t]:checked")].map((i) => ({ id: i.value, label: i.dataset.label }))
+  return { items, tests, general: (fd.get("general") || "").trim() }
+}
+const updateSummary = () => {
+  const { items, tests } = collect()
+  const n = (d) => items.filter((i) => i.disposition == d).length
+  document.getElementById("summary").textContent = `${n("fix")} fix · ${n("doc")} doc · ${n("defer")} defer · ${n("reject")} reject · ${tests.length} tests`
+}
+form.addEventListener("change", updateSummary)
+updateSummary()
+function submitReview() {
+  const { items, tests, general } = collect()
+  const lines = items.map((i) => `${i.id} [${i.disposition}] ${i.label}${i.note ? " (note: " + i.note + ")" : ""}`)
+  const text = `Step 4 review decisions. Apply every item by its disposition and give an item-by-item receipt (account for every ID).\n${lines.join("\n")}\nTests to add: ${tests.map((t) => t.id).join(", ") || "none"}${general ? "\nGeneral: " + general : ""}`
+  window.lavish?.queuePrompt(text, { tag: "tracked-batch", text: `Step 4 review: ${items.length} items, ${tests.length} tests`, element: form, queueKey: "step4-review", data: { items, tests, general } })
+}
+</script>
+</body>
+</html>

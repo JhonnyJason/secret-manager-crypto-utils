@@ -1,0 +1,249 @@
+<!doctype html>
+<html data-theme="luxury" data-lavish-annotate="on" lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>crypto-utils v0.4.0 scope</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, li, td, th, .badge) { overflow-wrap: anywhere; }
+  code { font-size: .85em; background: var(--color-base-300); padding: .05em .35em; border-radius: .3em; }
+  .opt { cursor: pointer; }
+  .opt:has(input:checked) { outline: 2px solid var(--color-primary); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content">
+<main class="mx-auto max-w-5xl p-4 lg:p-10 space-y-10">
+
+<header class="space-y-3">
+  <div class="text-sm opacity-60">secret-manager-crypto-utils · plan/current-task.md</div>
+  <h1 class="text-4xl font-bold">v0.4.0: what goes into the upgrade</h1>
+  <p class="opacity-80 max-w-3xl">The handoff already settles the <b>security mission</b> (AES-GCM v1, padding, KDF, legacy fallback).
+  This page is about everything around it: language, runtime split, dependencies, API surface, tests.
+  Each decision has a recommendation; pick, change, or annotate, then queue your answers.</p>
+</header>
+
+<!-- ============================================================ -->
+<section class="space-y-4">
+  <h2 class="text-2xl font-bold">Where we stand</h2>
+  <div class="stats stats-vertical lg:stats-horizontal bg-base-200 w-full">
+    <div class="stat"><div class="stat-title">Source</div><div class="stat-value text-2xl">2 × ~710</div><div class="stat-desc">lines of CoffeeScript, node + browser, hand-synced</div></div>
+    <div class="stat"><div class="stat-title">Exports</div><div class="stat-value text-2xl">~70</div><div class="stat-desc">most are aliases (referencedSecretHash…)</div></div>
+    <div class="stat"><div class="stat-title">Consumers</div><div class="stat-value text-2xl">33</div><div class="stat-desc">package.json under ~/thingies, 23 on ^0.3.x</div></div>
+    <div class="stat"><div class="stat-title">Tests</div><div class="stat-value text-2xl">broken</div><div class="stat-desc">test.mjs imports old versions that left package.json</div></div>
+  </div>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="card bg-base-200"><div class="card-body">
+      <h3 class="card-title text-lg">Divergences found between the two builds</h3>
+      <ul class="list-disc ml-5 space-y-1 text-sm">
+        <li><code>sha256/sha512</code>: <b>sync</b> in node (crypto.createHash), <b>async</b> in browser (subtle.digest). A caller that forgets <code>await</code> works only in node. That breaks the "consumer notices no difference" goal.</li>
+        <li>Browser uses <code>window.crypto</code>, so it breaks in workers and Deno.</li>
+        <li>Both carry the <code>keyBytes.buffer</code> offset bug and the <code>for b in saltContent</code> bug from the handoff.</li>
+      </ul>
+    </div></div>
+    <div class="card bg-base-200"><div class="card-body">
+      <h3 class="card-title text-lg">What the platforms give us now</h3>
+      <ul class="list-disc ml-5 space-y-1 text-sm">
+        <li><code>globalThis.crypto.subtle</code> exists in Node ≥19, Deno, Bun, browsers and workers, with the same API everywhere.</li>
+        <li><code>Uint8Array.prototype.toHex</code> / <code>Uint8Array.fromHex</code> are native (Node 25+, verified on our node 26; Chrome 140, Firefox 133, Safari 18.2).</li>
+        <li><code>@noble/ed25519</code> is at <b>3.x</b> (we pin 2.x). v3 renames <code>ExtendedPoint→Point</code> and <code>randomPrivateKey→randomSecretKey</code>.</li>
+        <li>0.x semver: <code>^0.3.1</code> never resolves to 0.4.0. Every consumer bumps deliberately, so it's a good moment for breaking changes.</li>
+      </ul>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="space-y-4">
+  <h2 class="text-2xl font-bold">Target shape (if all recommendations hold)</h2>
+  <svg viewBox="0 0 900 250" class="w-full bg-base-200 rounded-box" role="img" aria-label="Before: two coffee files per runtime. After: one JS module on WebCrypto">
+    <style>
+      .b{fill:var(--color-base-300);stroke:var(--color-base-content);stroke-opacity:.3}
+      .p{fill:var(--color-primary);fill-opacity:.15;stroke:var(--color-primary)}
+      .t{fill:var(--color-base-content);font:14px sans-serif}
+      .s{fill:var(--color-base-content);opacity:.6;font:12px sans-serif}
+      .a{stroke:var(--color-base-content);stroke-opacity:.4;fill:none;marker-end:url(#ar)}
+    </style>
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="currentColor" opacity=".5"/></marker></defs>
+    <text x="20" y="28" class="t" font-weight="bold">today</text>
+    <rect x="20" y="45" width="180" height="50" rx="8" class="b"/><text x="35" y="67" class="t">index.coffee</text><text x="35" y="84" class="s">node:crypto · sync sha</text>
+    <rect x="20" y="115" width="180" height="50" rx="8" class="b"/><text x="35" y="137" class="t">browser.coffee</text><text x="35" y="154" class="s">window.crypto · async sha</text>
+    <rect x="230" y="80" width="170" height="50" rx="8" class="b"/><text x="245" y="102" class="t">thingy-byte-utils</text><text x="245" y="119" class="s">also node/browser split</text>
+    <path d="M200,70 L228,98" class="a"/><path d="M200,140 L228,115" class="a"/>
+    <text x="20" y="200" class="s">+ @noble/ed25519 2.x · deps: 2 · builds: 2</text>
+
+    <line x1="440" y1="20" x2="440" y2="230" stroke="currentColor" stroke-opacity=".15"/>
+
+    <text x="480" y="28" class="t" font-weight="bold">v0.4.0</text>
+    <rect x="480" y="70" width="230" height="70" rx="8" class="p"/><text x="495" y="95" class="t">index.js (pure ESM)</text><text x="495" y="113" class="s">globalThis.crypto.subtle only</text><text x="495" y="129" class="s">all functions async</text>
+    <rect x="740" y="45" width="140" height="44" rx="8" class="b"/><text x="755" y="72" class="t">@noble/ed25519 3</text>
+    <rect x="740" y="120" width="140" height="44" rx="8" class="b"/><text x="755" y="140" class="t">native toHex</text><text x="755" y="156" class="s">or inline helper</text>
+    <path d="M710,90 L738,70" class="a"/><path d="M710,120 L738,138" class="a"/>
+    <text x="480" y="200" class="s">node · deno · bun · browser · worker: same file, same behavior</text>
+  </svg>
+</section>
+
+<!-- ============================================================ -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold">Decisions</h2>
+
+  <!-- D1 -->
+  <form class="card bg-base-200" data-lavish-question="d1" onsubmit="event.preventDefault(); q(this,'d1','Language')">
+    <div class="card-body space-y-3">
+      <h3 class="card-title">D1 · Source language</h3>
+      <div class="grid md:grid-cols-2 gap-3">
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="pure JS (ESM)" class="radio radio-primary radio-sm" checked><b>Pure JS (ESM)</b><span class="badge badge-primary badge-sm">recommended</span></span>
+          <span class="text-sm opacity-80 mt-2">What you named in the task. The build already copies <code>.js</code> as-is, so the thingy layout stays. JSDoc for types, no TS build step.</span></label>
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="keep CoffeeScript" class="radio radio-sm"><b>Keep CoffeeScript</b></span>
+          <span class="text-sm opacity-80 mt-2">No rewrite cost, but crypto code reviewed through a transpiler, and contributors need coffee.</span></label>
+      </div>
+      <textarea name="note" class="textarea w-full" rows="1" placeholder="optional note"></textarea>
+      <div class="card-actions justify-end"><button class="btn btn-primary btn-sm">Queue answer</button></div>
+    </div>
+  </form>
+
+  <!-- D2 -->
+  <form class="card bg-base-200" data-lavish-question="d2" onsubmit="event.preventDefault(); q(this,'d2','Runtime variations')">
+    <div class="card-body space-y-3">
+      <h3 class="card-title">D2 · Node / browser / deno variations</h3>
+      <div class="grid md:grid-cols-3 gap-3">
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="single WebCrypto implementation" class="radio radio-primary radio-sm" checked><b>One file, WebCrypto only</b></span><span class="badge badge-primary badge-sm mt-1">recommended</span>
+          <span class="text-sm opacity-80 mt-2">Delete the split. Same code runs everywhere, and it removes the variation problem instead of managing it. <b>Cost:</b> node <code>sha*</code> becomes async. That's a break for sync callers, but those were already broken in the browser. Requires Node ≥20.</span></label>
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="shared core + conditional exports" class="radio radio-sm"><b>Shared core + conditional exports</b></span>
+          <span class="text-sm opacity-80 mt-2">Core in one file, a tiny per-runtime adapter selected via <code>package.json</code> <code>exports</code> conditions. Lets node keep sync sha. More files, more to test.</span></label>
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="keep two builds" class="radio radio-sm"><b>Keep two builds</b></span>
+          <span class="text-sm opacity-80 mt-2">Status quo. Every fix lands twice, and drift is what produced today's divergences.</span></label>
+      </div>
+      <textarea name="note" class="textarea w-full" rows="1" placeholder="optional note"></textarea>
+      <div class="card-actions justify-end"><button class="btn btn-primary btn-sm">Queue answer</button></div>
+    </div>
+  </form>
+
+  <!-- D3 -->
+  <form class="card bg-base-200" data-lavish-question="d3" onsubmit="event.preventDefault(); q(this,'d3','thingy-byte-utils')">
+    <div class="card-body space-y-3">
+      <h3 class="card-title">D3 · thingy-byte-utils</h3>
+      <p class="text-sm opacity-80">We use 5 functions: <code>bytesToHex hexToBytes utf8ToBytes bytesToUtf8 bytesToBigInt</code>. Two are native now, two are TextEncoder/TextDecoder one-liners, and bytesToBigInt is ~3 lines. 33 packages depend on byte-utils.</p>
+      <div class="grid md:grid-cols-3 gap-3">
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="drop dependency, inline" class="radio radio-primary radio-sm" checked><b>Drop it here</b></span><span class="badge badge-primary badge-sm mt-1">recommended</span>
+          <span class="text-sm opacity-80 mt-2">~10 lines inline, one dependency fewer in a security package. Modernizing byte-utils becomes its own later task (deferred.md).</span></label>
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="modernize byte-utils first, keep using it" class="radio radio-sm"><b>Modernize it first</b></span>
+          <span class="text-sm opacity-80 mt-2">Pure JS, single impl, native hex, plus hex validation. Benefits all 33 consumers. A second package to release before this one.</span></label>
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="leave byte-utils as is" class="radio radio-sm"><b>Leave as is</b></span>
+          <span class="text-sm opacity-80 mt-2">Keeps 0.0.8 with its own node/browser split. Note: its <code>hexToBytes</code> silently accepts invalid hex.</span></label>
+      </div>
+      <textarea name="note" class="textarea w-full" rows="1" placeholder="optional note"></textarea>
+      <div class="card-actions justify-end"><button class="btn btn-primary btn-sm">Queue answer</button></div>
+    </div>
+  </form>
+
+  <!-- D4 -->
+  <form class="card bg-base-200" data-lavish-question="d4" onsubmit="event.preventDefault(); q(this,'d4','API surface / aliases')">
+    <div class="card-body space-y-3">
+      <h3 class="card-title">D4 · The ~70 exports</h3>
+      <p class="text-sm opacity-80">E.g. <code>elGamalSecretHash</code> has 6 names (<code>…Hex, referencedSharedSecretHash(Hex), referencedSecretHash(Hex)</code>). Plus <code>saltContent/unsaltContent</code> are public.</p>
+      <div class="grid md:grid-cols-3 gap-3">
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="keep all aliases, document canonical names, unexport salt helpers" class="radio radio-primary radio-sm" checked><b>Keep aliases</b></span><span class="badge badge-primary badge-sm mt-1">recommended</span>
+          <span class="text-sm opacity-80 mt-2">An alias costs one line. Consumers bump without code edits. README lists canonical names; aliases are marked deprecated. salt helpers become internal (legacy decrypt only).</span></label>
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="trim to canonical names" class="radio radio-sm"><b>Trim to canonical</b></span>
+          <span class="text-sm opacity-80 mt-2">Clean API now, but some of the 33 consumers need grep+edit when they bump.</span></label>
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="aliases in a separate compat entry" class="radio radio-sm"><b>Compat entry point</b></span>
+          <span class="text-sm opacity-80 mt-2"><code>import … from "…/compat"</code>. Clean main API, but consumers still have to edit their imports.</span></label>
+      </div>
+      <textarea name="note" class="textarea w-full" rows="1" placeholder="optional note"></textarea>
+      <div class="card-actions justify-end"><button class="btn btn-primary btn-sm">Queue answer</button></div>
+    </div>
+  </form>
+
+  <!-- D5 -->
+  <form class="card bg-base-200" data-lavish-question="d5" onsubmit="event.preventDefault(); q(this,'d5','Legacy decrypt')">
+    <div class="card-body space-y-3">
+      <h3 class="card-title">D5 · Legacy ciphertext (open in the handoff)</h3>
+      <div class="grid md:grid-cols-2 gap-3">
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="auto-detect: try v1, fall back to CBC" class="radio radio-primary radio-sm" checked><b>Auto-detect in decrypt</b></span><span class="badge badge-primary badge-sm mt-1">recommended</span>
+          <span class="text-sm opacity-80 mt-2">The GCM tag decides, not the byte. Consumers bump and old secrets keep working. <b>Cost:</b> an attacker can still feed forged <i>legacy</i> CBC ciphertext, so integrity only holds once old data is re-encrypted.</span></label>
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="explicit legacyDecrypt functions" class="radio radio-sm"><b>Explicit <code>symmetricDecryptLegacy*</code></b></span>
+          <span class="text-sm opacity-80 mt-2">Default decrypt is v1-only and strict. Consumers with old data opt in and can migrate. Safer by default; each of the 33 consumers needs a decision.</span></label>
+      </div>
+      <textarea name="note" class="textarea w-full" rows="1" placeholder="optional note"></textarea>
+      <div class="card-actions justify-end"><button class="btn btn-primary btn-sm">Queue answer</button></div>
+    </div>
+  </form>
+
+  <!-- D6 -->
+  <form class="card bg-base-200" data-lavish-question="d6" onsubmit="event.preventDefault(); q(this,'d6','v1 padding scheme')">
+    <div class="card-body space-y-3">
+      <h3 class="card-title">D6 · v1 padding (handoff: "your design")</h3>
+      <div class="mockup-code text-xs"><pre data-prefix=">"><code>0x01 ‖ nonce(12) ‖ GCM( padLen(1) ‖ content ‖ random(padLen) ) ‖ tag(16)</code></pre></div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="1-byte padLen prefix, random 0-255 pad" class="radio radio-primary radio-sm" checked><b>Random 0–255 bytes</b></span><span class="badge badge-primary badge-sm mt-1">recommended</span>
+          <span class="text-sm opacity-80 mt-2">Unambiguous, authenticated, trivial to strip (check <code>padLen ≤ len-1</code>). Similar overhead to the old salt (33–160 B). Exact length is hidden by up to 255 B.</span></label>
+        <label class="opt card bg-base-100 p-4"><span class="flex gap-2 items-center"><input type="radio" name="v" value="pad to length buckets (power of 2 / 64B)" class="radio radio-sm"><b>Bucket padding</b></span>
+          <span class="text-sm opacity-80 mt-2">Pad to the next 64 B or power of 2. Hides length better for short secrets, deterministic size. Needs a 4-byte length prefix.</span></label>
+      </div>
+      <textarea name="note" class="textarea w-full" rows="1" placeholder="optional note"></textarea>
+      <div class="card-actions justify-end"><button class="btn btn-primary btn-sm">Queue answer</button></div>
+    </div>
+  </form>
+
+  <!-- D7 scope -->
+  <form class="card bg-base-200" data-lavish-question="d7" onsubmit="event.preventDefault(); scope(this)">
+    <div class="card-body space-y-3">
+      <h3 class="card-title">D7 · Scope: what else rides along?</h3>
+      <div class="space-y-2 text-sm">
+        <label class="flex gap-3 items-start"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary" name="s" value="S1 bump @noble/ed25519 to 3.x" checked><span><b>S1</b> Bump <code>@noble/ed25519</code> 2→3 (small API renames, maintained line)</span></label>
+        <label class="flex gap-3 items-start"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary" name="s" value="S2 rewrite tests with node:test + legacy fixtures" checked><span><b>S2</b> Replace the 791-line perf <code>test.mjs</code> with <code>node:test</code> asserts + checked-in v0.3.1 fixtures (the handoff list)</span></label>
+        <label class="flex gap-3 items-start"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary" name="s" value="S3 run same tests under deno/bun" checked><span><b>S3</b> Run the same test file under <code>deno test</code>/<code>bun test</code> too. With D2 this replaces most browser-tester work.</span></label>
+        <label class="flex gap-3 items-start"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary" name="s" value="S4 input validation (hex, key lengths)" checked><span><b>S4</b> Validate inputs at the boundary: hex format, 48-byte sym keys, 32-byte ed keys. Today a wrong key silently produces garbage.</span></label>
+        <label class="flex gap-3 items-start"><input type="checkbox" class="checkbox checkbox-sm" name="s" value="S5 native WebCrypto Ed25519 for sign/verify"><span><b>S5</b> Native WebCrypto Ed25519 for sign/verify. <i>Not recommended:</i> noble stays needed for point math anyway, so this only adds a second code path.</span></label>
+        <label class="flex gap-3 items-start"><input type="checkbox" class="checkbox checkbox-sm" name="s" value="S6 HKDF instead of sha512 for derived keys"><span><b>S6</b> HKDF instead of raw <code>sha512(point)</code> in asymmetric/DH. <i>Not recommended now:</i> it changes derived secrets and breaks compat for marginal gain.</span></label>
+        <label class="flex gap-3 items-start"><input type="checkbox" class="checkbox checkbox-sm" name="s" value="S7 TypeScript .d.ts"><span><b>S7</b> Ship a <code>.d.ts</code> for editor support</span></label>
+      </div>
+      <textarea name="note" class="textarea w-full" rows="1" placeholder="anything missing?"></textarea>
+      <div class="card-actions justify-end"><button class="btn btn-primary btn-sm">Queue scope</button></div>
+    </div>
+  </form>
+</section>
+
+<!-- ============================================================ -->
+<section class="space-y-3">
+  <h2 class="text-2xl font-bold">Risks worth naming</h2>
+  <div class="grid md:grid-cols-3 gap-3 text-sm">
+    <div role="alert" class="alert alert-warning alert-soft"><span><b>Async sha</b> (D2): any node consumer calling <code>sha256()</code> without <code>await</code> gets a Promise. Grep the 23 ^0.3 consumers before release.</span></div>
+    <div role="alert" class="alert alert-warning alert-soft"><span><b>Legacy fixtures</b> must be generated with the <i>published</i> 0.3.1 before we touch code, or we lose the ground truth.</span></div>
+    <div role="alert" class="alert alert-info alert-soft"><span><b>Node ≥20 floor</b> (WebCrypto global + native hex in 25+, inline fallback below). Older services would need an upgrade.</span></div>
+  </div>
+</section>
+
+<section class="pb-10">
+  <h2 class="text-2xl font-bold mb-2">Proposed order once decided</h2>
+  <ul class="steps steps-vertical lg:steps-horizontal w-full text-sm">
+    <li class="step step-primary">Freeze 0.3.1 fixtures</li>
+    <li class="step">Tests first (S2)</li>
+    <li class="step">JS port, behavior-equal</li>
+    <li class="step">v1 GCM + KDF</li>
+    <li class="step">README + publish</li>
+  </ul>
+</section>
+
+</main>
+<script>
+function q(form, id, label) {
+  const fd = new FormData(form);
+  const v = fd.get('v'), note = (fd.get('note') || '').trim();
+  window.lavish?.queuePrompt(`${id.toUpperCase()} (${label}): ${v}${note ? ' (note: ' + note + ')' : ''}`,
+    { tag: 'choice', text: `${id.toUpperCase()}: ${v}`, element: form, queueKey: id, data: { question: id, answer: v, note } });
+}
+function scope(form) {
+  const items = [...form.querySelectorAll('input[name=s]:checked')].map(i => i.value);
+  const note = (new FormData(form).get('note') || '').trim();
+  window.lavish?.queuePrompt(`D7 scope, include: ${items.join('; ') || 'none'}${note ? ' (note: ' + note + ')' : ''}`,
+    { tag: 'tracked-batch', text: `D7: ${items.length} scope items`, element: form, queueKey: 'd7', data: { items, note } });
+}
+</script>
+</body>
+</html>
