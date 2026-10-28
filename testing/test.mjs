@@ -201,7 +201,15 @@ test(`symmetric keys shorter than 48 bytes are rejected`, async () => {
         await assert.rejects(m.symmetricEncryptBytes("x", keyBytes.subarray(0, len)), RangeError, `len ${len}`)
         await assert.rejects(m.symmetricDecryptBytes(await encrypt("x"), keyBytes.subarray(0, len)), RangeError)
     }
-    await assert.rejects(m.symmetricEncryptBytes("x", undefined), RangeError)
+    await assert.rejects(m.symmetricEncryptBytes("x", undefined), TypeError)
+})
+
+test(`symmetric decrypt rejects non-Uint8Array input with TypeError`, async () => {
+    const g = await encrypt("x")
+    for (const bad of [undefined, "00", Array.from(g), g.buffer]) {
+        await assert.rejects(m.symmetricDecryptBytes(bad, keyBytes), TypeError)
+        await assert.rejects(m.symmetricDecryptBytes(g, bad), TypeError)
+    }
 })
 
 test(`ed25519 lengths are enforced (noble)`, async () => {
@@ -211,7 +219,7 @@ test(`ed25519 lengths are enforced (noble)`, async () => {
 })
 
 test(`KDF rejects bad iterations and salt`, async () => {
-    for (const it of [0, -1, 1.5, "1000"]) await assert.rejects(m.deriveSymKeyFromPassword("pw", "00".repeat(16), it), RangeError, String(it))
+    for (const it of [0, -1, 1.5, "1000", 999, 10000001]) await assert.rejects(m.deriveSymKeyFromPassword("pw", "00".repeat(16), it), RangeError, String(it))
     await assert.rejects(m.deriveSymKeyFromPassword("pw", "xyz", 1000), SyntaxError)
 })
 
@@ -262,6 +270,19 @@ test(`small-order public keys are rejected`, async () => {
     }
 })
 
+// bob's public key + the order-8 point: not small-order, but not torsion-free either
+const bobPlusT8 = "f7f44d8ed83ce9887a1aa98973af07aeb60b94727755a55b03c5254382422952"
+
+test(`public keys with a torsion component are rejected`, async () => {
+    await assert.rejects(m.diffieHellmanSecretRawHex(alice.secretKeyHex, bobPlusT8), RangeError)
+    await assert.rejects(m.diffieHellmanSecretHashHex(alice.secretKeyHex, bobPlusT8, "ctx"), RangeError)
+    await assert.rejects(m.elGamalSecretRawHex(bobPlusT8), RangeError)
+    await assert.rejects(m.elGamalSecretHashHex(bobPlusT8, "ctx"), RangeError)
+    await assert.rejects(m.asymmetricEncryptHex("x", bobPlusT8), RangeError)
+    const s = await m.asymmetricEncryptHex("x", bob.publicKeyHex)
+    await assert.rejects(m.asymmetricDecryptHex({ ...s, referencePointHex: bobPlusT8 }, bob.secretKeyHex), RangeError)
+})
+
 test(`verify is strict: non-canonical encodings and malleable S rejected`, async () => {
     const s = fx.signatures[1]
     // identity with y = p + 1, only decodable in zip215 mode
@@ -304,7 +325,8 @@ test(`asymmetric referencePoint bit flips are rejected`, async () => {
     for (let bit = 0; bit < 256; bit++) {
         const referencePointBytes = s.referencePointBytes.slice()
         referencePointBytes[bit >> 3] ^= 1 << (bit & 7)
-        await assert.rejects(m.asymmetricDecryptBytes({ ...s, referencePointBytes }, hexToBytes(bob.secretKeyHex)), `bit ${bit}`)
+        // not on the curve, small-order / torsion, or a valid point giving the wrong key
+        await assert.rejects(m.asymmetricDecryptBytes({ ...s, referencePointBytes }, hexToBytes(bob.secretKeyHex)), /bad point|Invalid public key|Decryption failed/, `bit ${bit}`)
     }
 })
 
