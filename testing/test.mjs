@@ -203,6 +203,45 @@ test(`v1 ignores key bytes 0..15`, async () => {
 })
 
 //############################################################
+// context: GCM additionalData
+test(`context roundtrips, wrong or missing context is rejected`, async () => {
+    const c = fx.contents[2]
+    const g = await m.symmetricEncryptHex(c, symKeyHex, "ctx")
+    assert.equal(await m.symmetricDecryptHex(g, symKeyHex, "ctx"), c)
+    assert.equal(await m.symmetricDecryptBytes(await m.symmetricEncryptBytes(c, keyBytes, "ctx"), keyBytes, "ctx"), c)
+    for (const other of [undefined, "", "ctX", "ctx "]) await assert.rejects(m.symmetricDecryptHex(g, symKeyHex, other), /Decryption failed/, String(other))
+    await assert.rejects(m.symmetricDecryptHex(await m.symmetricEncryptHex(c, symKeyHex), symKeyHex, "ctx"), /Decryption failed/)
+
+    const s = await m.asymmetricEncryptHex(c, bob.publicKeyHex, "ctx")
+    assert.equal(await m.asymmetricDecryptHex(s, bob.secretKeyHex, "ctx"), c)
+    await assert.rejects(m.asymmetricDecryptHex(s, bob.secretKeyHex), /Decryption failed/)
+    await assert.rejects(m.asymmetricDecryptHex(s, bob.secretKeyHex, "other"), /Decryption failed/)
+    const sb = await m.asymmetricEncryptBytes(c, hexToBytes(bob.publicKeyHex), "ctx")
+    assert.equal(await m.asymmetricDecryptBytes(sb, hexToBytes(bob.secretKeyHex), "ctx"), c)
+    await assert.rejects(m.asymmetricDecryptBytes(sb, hexToBytes(bob.secretKeyHex)), /Decryption failed/)
+})
+
+test(`empty context is the same as no context`, async () => {
+    const c = fx.contents[2]
+    assert.equal(await m.symmetricDecryptHex(await m.symmetricEncryptHex(c, symKeyHex, ""), symKeyHex), c)
+    assert.equal(await m.symmetricDecryptHex(await m.symmetricEncryptHex(c, symKeyHex), symKeyHex, ""), c)
+    assert.equal(await m.asymmetricDecryptHex(await m.asymmetricEncryptHex(c, bob.publicKeyHex, ""), bob.secretKeyHex), c)
+    // sealed without any additionalData: today's v1 output still decrypts
+    const key = await crypto.subtle.importKey("raw", keyBytes.subarray(16, 48), "AES-GCM", false, ["encrypt"])
+    const nonce = new Uint8Array(12)
+    const sealed = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce }, key, new Uint8Array([0, 104, 105])))
+    assert.equal(await m.symmetricDecryptBytes(new Uint8Array([0x01, ...nonce, ...sealed]), keyBytes, ""), "hi")
+})
+
+test(`context never unlocks legacy ciphertext, must be a well-formed string`, async () => {
+    await assert.rejects(m.symmetricDecryptHex(fx.symmetric[0].gibbrishHex, symKeyHex, "ctx"), /Decryption failed/)
+    for (const bad of ["a\uD800b", 42, null]) {
+        await assert.rejects(m.symmetricEncryptHex("x", symKeyHex, bad), TypeError, String(bad))
+        await assert.rejects(m.symmetricDecryptHex(await m.symmetricEncryptHex("x", symKeyHex), symKeyHex, bad), TypeError)
+    }
+})
+
+//############################################################
 // KDF: PBKDF2-SHA256, 48 bytes
 test(`KDF matches PBKDF2-SHA256 known answer`, async () => {
     const saltHex = "00112233445566778899aabbccddeeff"
