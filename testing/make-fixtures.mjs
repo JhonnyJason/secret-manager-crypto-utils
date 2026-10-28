@@ -27,7 +27,7 @@ const alice = await n.createKeyPairHex()
 const bob = await n.createKeyPairHex()
 const symKeyHex = await n.createSymKeyHex()
 
-const f = { version, alice, bob, symKeyHex, contents, sha: [], signatures: [], symmetric: [], asymmetric: [], diffieHellman: [], elGamal: [] }
+const f = { version, alice, bob, symKeyHex, contents, sha: [], signatures: [], symmetric: [], asymmetric: [], diffieHellman: [], elGamal: [], asymmetricOld: [] }
 
 for (const c of contents) {
     f.sha.push({ content: c, sha256Hex: await n.sha256Hex(c), sha512Hex: await n.sha512Hex(c) })
@@ -44,20 +44,30 @@ for (const [build, m] of Object.entries(builds)) {
         const sb = await m.asymmetricEncryptBytes(c, new Uint8Array(Buffer.from(bob.publicKeyHex, "hex")))
         f.asymmetric.push({ build, variant: "bytes", content: c, referencePointHex: hex(sb.referencePointBytes), encryptedContentHex: hex(sb.encryptedContentBytes) })
     }
-    // legacy ciphertext starting with 0x01 (~1/256): decrypt must fall back to CBC when the v1 tag fails
+    // legacy ciphertext starting with 0x01 (~1/256): main (v1) decrypt must reject it, a legacy decrypt must read it
     for (let i = 0; i < 100000; i++) {
         const gibbrishHex = await m.symmetricEncryptHex(contents[2], symKeyHex)
         if (gibbrishHex.startsWith("01")) { f.symmetric.push({ build, variant: "hex", content: contents[2], gibbrishHex }); break }
     }
+    // 0.2.0 names: createSharedSecret* / referencedSharedSecret*
+    const dhHash = m.diffieHellmanSecretHashHex ?? m.createSharedSecretHashHex, dhRaw = m.diffieHellmanSecretRawHex ?? m.createSharedSecretRawHex
+    const egHash = m.elGamalSecretHashHex ?? m.referencedSharedSecretHashHex, egRaw = m.elGamalSecretRawHex ?? m.referencedSharedSecretRawHex
     for (const context of contexts) {
         f.diffieHellman.push({ build, context,
-            hashHex: await m.diffieHellmanSecretHashHex(alice.secretKeyHex, bob.publicKeyHex, context),
-            rawHex: await m.diffieHellmanSecretRawHex(alice.secretKeyHex, bob.publicKeyHex) })
+            hashHex: await dhHash(alice.secretKeyHex, bob.publicKeyHex, context),
+            rawHex: await dhRaw(alice.secretKeyHex, bob.publicKeyHex) })
         // receiver recomputes sharedSecretHex via diffieHellmanSecretHash(bob.secretKeyHex, referencePointHex, context)
-        f.elGamal.push({ build, context, kind: "hash", ...await m.elGamalSecretHashHex(bob.publicKeyHex, context) })
+        f.elGamal.push({ build, context, kind: "hash", ...await egHash(bob.publicKeyHex, context) })
     }
-    f.elGamal.push({ build, context: "", kind: "raw", ...await m.elGamalSecretRawHex(bob.publicKeyHex) })
+    f.elGamal.push({ build, context: "", kind: "raw", ...await egRaw(bob.publicKeyHex) })
+    // 0.1.0-0.2.0: asymmetricEncryptOld writes the 0.0.x asymmetric format
+    if (m.asymmetricEncryptOld) for (const c of contents) {
+        const s = await m.asymmetricEncryptOld(c, bob.publicKeyHex)
+        f.asymmetricOld.push({ build, variant: "hex", content: c, referencePointHex: s.referencePointHex, encryptedContentHex: s.encryptedContentHex })
+    }
 }
+
+if (!f.asymmetricOld.length) delete f.asymmetricOld
 
 const out = path.join(import.meta.dirname, "fixtures", `v${version}.json`)
 fs.mkdirSync(path.dirname(out), { recursive: true })

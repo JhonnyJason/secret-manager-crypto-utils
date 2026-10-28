@@ -1,0 +1,474 @@
+{
+  "version": "0.2.0",
+  "alice": {
+    "secretKeyHex": "8cbcc4c0aead4b4fc08c11e72e306c4f89af33bfec75ee220ddbe3b224934517",
+    "publicKeyHex": "52d8d363e731cc634b73d7ca6b7216676e2f85d76246e9017aba8a3f96db209b"
+  },
+  "bob": {
+    "secretKeyHex": "239c1e9bac00110e168c21ee27145135069a108f2b8517abbd94fc6e3a417a91",
+    "publicKeyHex": "f894c9499f81b83f3d9acdbfeadc33f2524c08d457a34bbe7cedc5d0cb166888"
+  },
+  "symKeyHex": "90a6d4931e94e8683ef22deb256a051997d12cf8a151580325a24e0790e938b7e9eebc33bd957ab6a51989dbfe68e7db",
+  "contents": [
+    "",
+    "a",
+    "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^",
+    "{\"gh\":{\"accessToken\":\"ghp_0123456789abcdef\",\"host\":\"github.com\"}}",
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  ],
+  "sha": [
+    {
+      "content": "",
+      "sha256Hex": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha512Hex": "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"
+    },
+    {
+      "content": "a",
+      "sha256Hex": "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+      "sha512Hex": "1f40fc92da241694750979ee6cf582f2d5d7d28e18335de05abc54d0560e0f5302860c652bf08d560252aa5e74210546f369fbbbce8c12cfc7957b2652fe9a75"
+    },
+    {
+      "content": "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^",
+      "sha256Hex": "963c5ecd9c784800e7fbb245b3bf443a13e8c0bf886a549b28a627326207fc1e",
+      "sha512Hex": "a5ae20f262071f297068fdba9a280737122c157def52476ddb1a5d9da54609fa13595382129bd74a9c632b363b1431b57248a30a68a2544b91cb319f7182f3d1"
+    },
+    {
+      "content": "{\"gh\":{\"accessToken\":\"ghp_0123456789abcdef\",\"host\":\"github.com\"}}",
+      "sha256Hex": "4de77ddaab53ce752fdf82aef1c81481925f96213c231f4e3c97a6ff2dc15027",
+      "sha512Hex": "fbeafd2f8a2297975ee5ceccd39e9badd1febce96aa6302c65800bfba99efa81b6879faf2a21ec175a20dba1435a207b54fe4b6815923a1bbb1858b1f61cbe18"
+    },
+    {
+      "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "sha256Hex": "44f8354494a5ba03ba1792a8d3e9c534c47a9181980fde7a3f44b06ef2ae7c7f",
+      "sha512Hex": "ae13575c5d98bfa689617bb19f0f55efdd52b39397fd620bcd1fbc03fda979e6b69bfba24698176eafe766d31c48b70273b03198064323082e04cc4eb9126310"
+    }
+  ],
+  "signatures": [
+    {
+      "content": "",
+      "sigHex": "bf21913ff43e269efb1f8467c83e22d71b9a69a917efd6732ccb684e14801065976f7a4d54372dff4af3ef9fa106896ca95e4fc37960e47f525cb82e65428400"
+    },
+    {
+      "content": "a",
+      "sigHex": "e3a3be9e1cfbe579dc388fb46b9f5a0b9f08a89822af0830d0349336670072a6f2973184acf9c4a95b3bfa4b08ba50a78fda047d2905df84a5a3f2a3209bd707"
+    },
+    {
+      "content": "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^",
+      "sigHex": "00cdc1928e46209d33a8b0936e9d9e2dd95c13e7c8c13982fb1ba82bb07664cd452066930d6cbb2acf062618d4f852ce6d529b196cbd80755fd3d2e7405d3d0f"
+    },
+    {
+      "content": "{\"gh\":{\"accessToken\":\"ghp_0123456789abcdef\",\"host\":\"github.com\"}}",
+      "sigHex": "bccbcab94d62ae584b8a7d3794e49420d606297c9fab8cd2f32497b1d54b5694a22076c7fc4d8958971f68693bd840dfc9a3236f2b1ea45942f037d0366c730d"
+    },
+    {
+      "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "sigHex": "def849c92de46e2e3a7936a15a341d9d8f082c9797fed24dc09de3e9d5af2b1eeb6ae3ec106e9fbd3053cc1a4cffa13271abcdb66566b83683c480fb628af00f"
+    }
+  ],
+  "symmetric": [
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "",
+      "gibbrishHex": "317b645f25822a4a4d387cb5f46368ae"
+    },
+    {
+      "build": "node",
+      "variant": "bytes",
+      "content": "",
+      "gibbrishHex": "317b645f25822a4a4d387cb5f46368ae"
+    },
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "a",
+      "gibbrishHex": "f82019acf15a8d3b48ca186b45367380"
+    },
+    {
+      "build": "node",
+      "variant": "bytes",
+      "content": "a",
+      "gibbrishHex": "f82019acf15a8d3b48ca186b45367380"
+    },
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^",
+      "gibbrishHex": "bffdd0183f4a4f1ccfe19f339916767fe58120f507941be578a2eda4626675168bebe2ade42a2fb53d7c553a5742981a37e6105e91f7a090583246f696336fca"
+    },
+    {
+      "build": "node",
+      "variant": "bytes",
+      "content": "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^",
+      "gibbrishHex": "bffdd0183f4a4f1ccfe19f339916767fe58120f507941be578a2eda4626675168bebe2ade42a2fb53d7c553a5742981a37e6105e91f7a090583246f696336fca"
+    },
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "{\"gh\":{\"accessToken\":\"ghp_0123456789abcdef\",\"host\":\"github.com\"}}",
+      "gibbrishHex": "19fc51173c1e52d47da13fcfe2816184f2b13cc602a7bdf83c4040a6f9ad41ec3dc000875d5853d466fe20c8d62a1db02c29b61d470ec607a2f45039b1fb425f4a6c04253db2a8ef4ba986992577804d"
+    },
+    {
+      "build": "node",
+      "variant": "bytes",
+      "content": "{\"gh\":{\"accessToken\":\"ghp_0123456789abcdef\",\"host\":\"github.com\"}}",
+      "gibbrishHex": "19fc51173c1e52d47da13fcfe2816184f2b13cc602a7bdf83c4040a6f9ad41ec3dc000875d5853d466fe20c8d62a1db02c29b61d470ec607a2f45039b1fb425f4a6c04253db2a8ef4ba986992577804d"
+    },
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "gibbrishHex": "d41163f7ac34b71ca418730fd0c7d225a050e081824a8e464b03c7073463705cd552abecf923e65a31a71acb79e9db83a692ad08ac86836b3146a35a37b1d04f650f14127d600165434af9ad8e2a3ae864f04766ccded551c89c83347a4a6cd12f951f55d5b57ea61400936f7673e62b21fd383203c9ddb39c5aedaf7255ff50bbe5b05d9427f0f97b2563f287e4f7cb0d39ec32c1bd3feb671f6c6d36ee2b8b1431295bc99b8068004fb2a0d9521d468dc122b9b6e6c8c6d83e36c9c8e712790ade9f4335f10009ceeb8935576c7979448d5903b1a37175539d7c70d9c39fcc2e14782d6e6e826e200ea8ecdab3847367727c3e0b0fe19da155b309d96a0ab0be71a3e9598b476850926e81be37010967e70f4f9b0b44723cc14bda1658503557b0cd9ae873d42c18c65b898c3c0cb737aeb60df65d87b519b645d5f1039fafdb0835a106bb79a21c3b64eb2bf6f0f1e8c622e6185ac1b88183a380a3a98ad52302c72632b58e2551c0906bc55d2dfe8f36cc9939e74a74ccfae1b5f21229d6ef57065129a470dd2f0b4887222a2ce4b082da57b9258ba522ce7c20cb64ee86aa5f7a7ad00a24c1c334a520f4002889f8f8ef7b2e4cb168893d0a14d795ef79b2fa86e5a84e958865dc0ff8923462303c4bc09d6d389dfaeb3e6407513c20298012868bcc0cc33e3051376d72fc7cda5dbff5ad0389d357c6a29e58112e6d85761338ebb2c11cb3a87f0b0cfb4217e103fc14899d9e846f4abaa3d6dc57b1a14083081d0818ba124cd77815c887d03d1813aa3b01a7413b9fdb60a1c64964c88ef49edab9b240cc9b02003f2033359ad9aa8a3f6d86d558514b16daf504b7a0b103a82c6b2f31c88b782161ff66f3d7ec8ae6ab68d339edc257c4338aea05257004d41423d894e4e67273f380b5118038ee93df380f57c966752117d68dbe2c362cd13991e4d70735df8452ac1d33f35b41e009854348e06c036fc7c5d29a1ef85d77ab12de7d2f4b15e43db91d5bb6b16dd604239e3d92a4606f3633471ed47972428129d17f84e102f733870429b24a87cd8003fad89fae526cf00595271e9c1b45e04a37aacac065eb37ec7da58b28f58b2cdb239931fea398caab629fa29bdc8493e74d648187353a6cb48a2193043e5c30645f6b2e5a0636fb0a3be717fc273cc58503c1162aa58571386563837870880aae29c42a266941135e8bef03cd45cf5f74fe3eed07eadde4c07bff524b2030aa59930a4ee23392253f3558cf2637d6a2349032db18acefb34cf95939727e98c28531b30a22678497721f5da43ab143300034ab6809e47a0840411fd6628275554e11b7611f35fd86e5ed696d914e435e98d06577f8ed4b1c029e42b035e7ab932d01749b6109233de29bd4795ef53778f700ca838183c976d5bbc163"
+    },
+    {
+      "build": "node",
+      "variant": "bytes",
+      "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "gibbrishHex": "d41163f7ac34b71ca418730fd0c7d225a050e081824a8e464b03c7073463705cd552abecf923e65a31a71acb79e9db83a692ad08ac86836b3146a35a37b1d04f650f14127d600165434af9ad8e2a3ae864f04766ccded551c89c83347a4a6cd12f951f55d5b57ea61400936f7673e62b21fd383203c9ddb39c5aedaf7255ff50bbe5b05d9427f0f97b2563f287e4f7cb0d39ec32c1bd3feb671f6c6d36ee2b8b1431295bc99b8068004fb2a0d9521d468dc122b9b6e6c8c6d83e36c9c8e712790ade9f4335f10009ceeb8935576c7979448d5903b1a37175539d7c70d9c39fcc2e14782d6e6e826e200ea8ecdab3847367727c3e0b0fe19da155b309d96a0ab0be71a3e9598b476850926e81be37010967e70f4f9b0b44723cc14bda1658503557b0cd9ae873d42c18c65b898c3c0cb737aeb60df65d87b519b645d5f1039fafdb0835a106bb79a21c3b64eb2bf6f0f1e8c622e6185ac1b88183a380a3a98ad52302c72632b58e2551c0906bc55d2dfe8f36cc9939e74a74ccfae1b5f21229d6ef57065129a470dd2f0b4887222a2ce4b082da57b9258ba522ce7c20cb64ee86aa5f7a7ad00a24c1c334a520f4002889f8f8ef7b2e4cb168893d0a14d795ef79b2fa86e5a84e958865dc0ff8923462303c4bc09d6d389dfaeb3e6407513c20298012868bcc0cc33e3051376d72fc7cda5dbff5ad0389d357c6a29e58112e6d85761338ebb2c11cb3a87f0b0cfb4217e103fc14899d9e846f4abaa3d6dc57b1a14083081d0818ba124cd77815c887d03d1813aa3b01a7413b9fdb60a1c64964c88ef49edab9b240cc9b02003f2033359ad9aa8a3f6d86d558514b16daf504b7a0b103a82c6b2f31c88b782161ff66f3d7ec8ae6ab68d339edc257c4338aea05257004d41423d894e4e67273f380b5118038ee93df380f57c966752117d68dbe2c362cd13991e4d70735df8452ac1d33f35b41e009854348e06c036fc7c5d29a1ef85d77ab12de7d2f4b15e43db91d5bb6b16dd604239e3d92a4606f3633471ed47972428129d17f84e102f733870429b24a87cd8003fad89fae526cf00595271e9c1b45e04a37aacac065eb37ec7da58b28f58b2cdb239931fea398caab629fa29bdc8493e74d648187353a6cb48a2193043e5c30645f6b2e5a0636fb0a3be717fc273cc58503c1162aa58571386563837870880aae29c42a266941135e8bef03cd45cf5f74fe3eed07eadde4c07bff524b2030aa59930a4ee23392253f3558cf2637d6a2349032db18acefb34cf95939727e98c28531b30a22678497721f5da43ab143300034ab6809e47a0840411fd6628275554e11b7611f35fd86e5ed696d914e435e98d06577f8ed4b1c029e42b035e7ab932d01749b6109233de29bd4795ef53778f700ca838183c976d5bbc163"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "",
+      "gibbrishHex": "317b645f25822a4a4d387cb5f46368ae"
+    },
+    {
+      "build": "browser",
+      "variant": "bytes",
+      "content": "",
+      "gibbrishHex": "317b645f25822a4a4d387cb5f46368ae"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "a",
+      "gibbrishHex": "f82019acf15a8d3b48ca186b45367380"
+    },
+    {
+      "build": "browser",
+      "variant": "bytes",
+      "content": "a",
+      "gibbrishHex": "f82019acf15a8d3b48ca186b45367380"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^",
+      "gibbrishHex": "bffdd0183f4a4f1ccfe19f339916767fe58120f507941be578a2eda4626675168bebe2ade42a2fb53d7c553a5742981a37e6105e91f7a090583246f696336fca"
+    },
+    {
+      "build": "browser",
+      "variant": "bytes",
+      "content": "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^",
+      "gibbrishHex": "bffdd0183f4a4f1ccfe19f339916767fe58120f507941be578a2eda4626675168bebe2ade42a2fb53d7c553a5742981a37e6105e91f7a090583246f696336fca"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "{\"gh\":{\"accessToken\":\"ghp_0123456789abcdef\",\"host\":\"github.com\"}}",
+      "gibbrishHex": "19fc51173c1e52d47da13fcfe2816184f2b13cc602a7bdf83c4040a6f9ad41ec3dc000875d5853d466fe20c8d62a1db02c29b61d470ec607a2f45039b1fb425f4a6c04253db2a8ef4ba986992577804d"
+    },
+    {
+      "build": "browser",
+      "variant": "bytes",
+      "content": "{\"gh\":{\"accessToken\":\"ghp_0123456789abcdef\",\"host\":\"github.com\"}}",
+      "gibbrishHex": "19fc51173c1e52d47da13fcfe2816184f2b13cc602a7bdf83c4040a6f9ad41ec3dc000875d5853d466fe20c8d62a1db02c29b61d470ec607a2f45039b1fb425f4a6c04253db2a8ef4ba986992577804d"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "gibbrishHex": "d41163f7ac34b71ca418730fd0c7d225a050e081824a8e464b03c7073463705cd552abecf923e65a31a71acb79e9db83a692ad08ac86836b3146a35a37b1d04f650f14127d600165434af9ad8e2a3ae864f04766ccded551c89c83347a4a6cd12f951f55d5b57ea61400936f7673e62b21fd383203c9ddb39c5aedaf7255ff50bbe5b05d9427f0f97b2563f287e4f7cb0d39ec32c1bd3feb671f6c6d36ee2b8b1431295bc99b8068004fb2a0d9521d468dc122b9b6e6c8c6d83e36c9c8e712790ade9f4335f10009ceeb8935576c7979448d5903b1a37175539d7c70d9c39fcc2e14782d6e6e826e200ea8ecdab3847367727c3e0b0fe19da155b309d96a0ab0be71a3e9598b476850926e81be37010967e70f4f9b0b44723cc14bda1658503557b0cd9ae873d42c18c65b898c3c0cb737aeb60df65d87b519b645d5f1039fafdb0835a106bb79a21c3b64eb2bf6f0f1e8c622e6185ac1b88183a380a3a98ad52302c72632b58e2551c0906bc55d2dfe8f36cc9939e74a74ccfae1b5f21229d6ef57065129a470dd2f0b4887222a2ce4b082da57b9258ba522ce7c20cb64ee86aa5f7a7ad00a24c1c334a520f4002889f8f8ef7b2e4cb168893d0a14d795ef79b2fa86e5a84e958865dc0ff8923462303c4bc09d6d389dfaeb3e6407513c20298012868bcc0cc33e3051376d72fc7cda5dbff5ad0389d357c6a29e58112e6d85761338ebb2c11cb3a87f0b0cfb4217e103fc14899d9e846f4abaa3d6dc57b1a14083081d0818ba124cd77815c887d03d1813aa3b01a7413b9fdb60a1c64964c88ef49edab9b240cc9b02003f2033359ad9aa8a3f6d86d558514b16daf504b7a0b103a82c6b2f31c88b782161ff66f3d7ec8ae6ab68d339edc257c4338aea05257004d41423d894e4e67273f380b5118038ee93df380f57c966752117d68dbe2c362cd13991e4d70735df8452ac1d33f35b41e009854348e06c036fc7c5d29a1ef85d77ab12de7d2f4b15e43db91d5bb6b16dd604239e3d92a4606f3633471ed47972428129d17f84e102f733870429b24a87cd8003fad89fae526cf00595271e9c1b45e04a37aacac065eb37ec7da58b28f58b2cdb239931fea398caab629fa29bdc8493e74d648187353a6cb48a2193043e5c30645f6b2e5a0636fb0a3be717fc273cc58503c1162aa58571386563837870880aae29c42a266941135e8bef03cd45cf5f74fe3eed07eadde4c07bff524b2030aa59930a4ee23392253f3558cf2637d6a2349032db18acefb34cf95939727e98c28531b30a22678497721f5da43ab143300034ab6809e47a0840411fd6628275554e11b7611f35fd86e5ed696d914e435e98d06577f8ed4b1c029e42b035e7ab932d01749b6109233de29bd4795ef53778f700ca838183c976d5bbc163"
+    },
+    {
+      "build": "browser",
+      "variant": "bytes",
+      "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "gibbrishHex": "d41163f7ac34b71ca418730fd0c7d225a050e081824a8e464b03c7073463705cd552abecf923e65a31a71acb79e9db83a692ad08ac86836b3146a35a37b1d04f650f14127d600165434af9ad8e2a3ae864f04766ccded551c89c83347a4a6cd12f951f55d5b57ea61400936f7673e62b21fd383203c9ddb39c5aedaf7255ff50bbe5b05d9427f0f97b2563f287e4f7cb0d39ec32c1bd3feb671f6c6d36ee2b8b1431295bc99b8068004fb2a0d9521d468dc122b9b6e6c8c6d83e36c9c8e712790ade9f4335f10009ceeb8935576c7979448d5903b1a37175539d7c70d9c39fcc2e14782d6e6e826e200ea8ecdab3847367727c3e0b0fe19da155b309d96a0ab0be71a3e9598b476850926e81be37010967e70f4f9b0b44723cc14bda1658503557b0cd9ae873d42c18c65b898c3c0cb737aeb60df65d87b519b645d5f1039fafdb0835a106bb79a21c3b64eb2bf6f0f1e8c622e6185ac1b88183a380a3a98ad52302c72632b58e2551c0906bc55d2dfe8f36cc9939e74a74ccfae1b5f21229d6ef57065129a470dd2f0b4887222a2ce4b082da57b9258ba522ce7c20cb64ee86aa5f7a7ad00a24c1c334a520f4002889f8f8ef7b2e4cb168893d0a14d795ef79b2fa86e5a84e958865dc0ff8923462303c4bc09d6d389dfaeb3e6407513c20298012868bcc0cc33e3051376d72fc7cda5dbff5ad0389d357c6a29e58112e6d85761338ebb2c11cb3a87f0b0cfb4217e103fc14899d9e846f4abaa3d6dc57b1a14083081d0818ba124cd77815c887d03d1813aa3b01a7413b9fdb60a1c64964c88ef49edab9b240cc9b02003f2033359ad9aa8a3f6d86d558514b16daf504b7a0b103a82c6b2f31c88b782161ff66f3d7ec8ae6ab68d339edc257c4338aea05257004d41423d894e4e67273f380b5118038ee93df380f57c966752117d68dbe2c362cd13991e4d70735df8452ac1d33f35b41e009854348e06c036fc7c5d29a1ef85d77ab12de7d2f4b15e43db91d5bb6b16dd604239e3d92a4606f3633471ed47972428129d17f84e102f733870429b24a87cd8003fad89fae526cf00595271e9c1b45e04a37aacac065eb37ec7da58b28f58b2cdb239931fea398caab629fa29bdc8493e74d648187353a6cb48a2193043e5c30645f6b2e5a0636fb0a3be717fc273cc58503c1162aa58571386563837870880aae29c42a266941135e8bef03cd45cf5f74fe3eed07eadde4c07bff524b2030aa59930a4ee23392253f3558cf2637d6a2349032db18acefb34cf95939727e98c28531b30a22678497721f5da43ab143300034ab6809e47a0840411fd6628275554e11b7611f35fd86e5ed696d914e435e98d06577f8ed4b1c029e42b035e7ab932d01749b6109233de29bd4795ef53778f700ca838183c976d5bbc163"
+    }
+  ],
+  "asymmetric": [
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "",
+      "referencePointHex": "5d0a2bfb69395b7d14eb7a298bade4e8aeaee9ea6ca08f124731816af354cb1e",
+      "encryptedContentHex": "793750a481e186f0175cbf1e97432907"
+    },
+    {
+      "build": "node",
+      "variant": "bytes",
+      "content": "",
+      "referencePointHex": "2a8ac729509112498d579016b7816f8e39b76bcc6ccc1a1c0e4adc540710041e",
+      "encryptedContentHex": "0625bde57aba84a6bafc412fdd5ed2e6"
+    },
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "a",
+      "referencePointHex": "04eff7d4a115ebcf4137c177ae6399b0102b46c6575ff0d54920149f3f6e9de4",
+      "encryptedContentHex": "e9a67c43644b9a31957a397e52dd9058"
+    },
+    {
+      "build": "node",
+      "variant": "bytes",
+      "content": "a",
+      "referencePointHex": "849cd47e50fcee71d53662598f0486ebe9225864ee62cbfe9ce66599394b8e8c",
+      "encryptedContentHex": "8c81e5e5a728224d848d7b5e6c717862"
+    },
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^",
+      "referencePointHex": "397d7a3285db097cac5f3efcce9f2eea0043f9b29fb7b9d4aea16713b83a228b",
+      "encryptedContentHex": "471f162d41df35c09f3285c3d54d832f6b873ce597a3f675691a245957f5f27938be13ccd7381b9bd9abf98f821a3b014f6705886cddfb31fdb7c65bc6a49dde"
+    },
+    {
+      "build": "node",
+      "variant": "bytes",
+      "content": "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^",
+      "referencePointHex": "50d033a744e58d618005a0a711588a2f89ffa7793a88871ec70ea2e4698784fe",
+      "encryptedContentHex": "ea6004b488645149bf29a723dbbeec82af77c715c9bcdaeba8f1f90c6a478ddf596e3f67895364a307adf75da6a328fd6e3397c7a7cc9e372c72a25b95515add"
+    },
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "{\"gh\":{\"accessToken\":\"ghp_0123456789abcdef\",\"host\":\"github.com\"}}",
+      "referencePointHex": "d166c148de6c685378ee94014c75d3b146ea70e60472e34dbf377b5b589e4709",
+      "encryptedContentHex": "d8952e6079e84ec4384f2666138b273542299743b1d34951d54b18a13c688ca72898c422b6ddb6b6f8bb7aeb0d0291fda9a13cb888a1e7cf4d2cf1da7b1c316846e7c858403b16be4bbc19993c49f2db"
+    },
+    {
+      "build": "node",
+      "variant": "bytes",
+      "content": "{\"gh\":{\"accessToken\":\"ghp_0123456789abcdef\",\"host\":\"github.com\"}}",
+      "referencePointHex": "c59df462d113164e9eba55a6bf9757232065b55937da02113e00e05ad59d5b9c",
+      "encryptedContentHex": "e5c2783291536d7ef622340f4ab28562e595db11e8ab42d66b2003832ef5dd184283f189d512fc16bd64a51cfd1265c5b842f5b50a5892fa495e11360e2a677b6187ab6a20f90011aba291c2665445a7"
+    },
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "referencePointHex": "4be29dd525c58466bddaf2c28a637df36ca92a0b579623d904b22ea973473d18",
+      "encryptedContentHex": "7c64da9796c65cd800a0ff85ed19cad2845bd4adc527d1e7aac0c07dfbfc4c13d7dd1aacb8791c9baa2b22f524593e3cdef0c55296416fb8db13aa7b44fb0fbb198119ba315366cc778a7e103bb07d6bf720730622b0406ac6c18b9a74eaa9017464a8097e63a040ffab5c788dfc9a5bb4e10fc007ddec99c726d8aa6201d0d325a43b649e89301afdd86238b107d8a94a16bc2e4e2e7fd8171dbd655f74850d9cbbe5363c1bb2b18e2830a641acd439ed025eee8f596fe286003d62cdfbeb53dc79f1eeb40ea645ed048cd06212b207b3f0b54e107e78c064148b110660d56cd1f0d1144a8f9ee9c110c63820d4badfebdd3af7378b4df90fd23d9cffd09910356f8a9ea9cd3d76c79d3485a95865ec95dbe96a58ae53e197bd7cf5f631a9f3bc8c456e9daa6892e02f5a26b7a1ffde44ee1857599d0b6b056c971bb7fe4c2a6cd045d6650297ed68ea5c47c2054361ff18d31e9853fb6cecb447c937245bf139d620908faafaeacc76a7d19cae2289d27526624d6a6057b8731a0f29fac5fa42e32583bdef935163470ef10be321908f517be3dc168dccf468475b1c5f9bdce0b2d94991ae538c14c6233137424ab125b4193367c961e30dd9b2f823c6b7349ede8474dc2e2c135289a0856fa9a25c553e448d142332fc859977c64341a001ce8393742a2bac411b6bd77f7469fd412766b195ece8ed894b2eb38c0d3c4f124df4c276c7f2c82e6d4de4857b8abdd2559847235ba3a350025715c304b5527550c840f626fe0eee44e0fb58f1549f7b19144c1cc7a616d55373cce47cf81ce09a6f85503ee551cfb1df1f3b6e5889e6970563ca5fd4abbd1eab72e785fcfe81287a4c84f4072314a6c3c134117c5f99a5d867e13c0d0382c5c5898c248417fba086039d0470c9772dd302be37fac0809f6cc84757187efd5b885f80afe73ae51c3735ef5b8da2db231ceef965be783c08d2e78fcdbe13b10ff269d93873382a4cd11ef55b9b2f2fe38be3d3f1ab5e484f25593d48c503bc17212ad09e6dadcbeb68832eb42c2fd38df5646ae63a1babd1e39c52cd513d45215fe5a478b6039daf83e423a2f4b765bd7e90f5c9bb234d7173657ac08bfbbd5961a76e47e20140088397d54886e8bc2dafa19fb711ccdbc50d84b0b227f817a5cd09b11c0f9bed9e5877476d134551c38f4a9d1b5f55f0644d4b3a71185114581e03ff27dbd2ee449cb055a6cefe3a2426fee0b713e12665edb9e93f9f892e66056f23cd60e14be3788e80193f0680f78e58c14bfcdbc4d3434fd7918bd14c8c02036d0f90e5e0d629545c79341780adeed8c0e0bd74392e8b24ca43a22ca6abc3d999e401ee532c51433384f877b0a98b6522d64020cf89d5cfc7c8e1cf9015581fbe6da04999e688d00c8747ca80deaaf14a24f2f854"
+    },
+    {
+      "build": "node",
+      "variant": "bytes",
+      "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "referencePointHex": "4ce85bd8b19c5365defba384db60d5315140ebe083ee66a5f58b7f1ed22cf824",
+      "encryptedContentHex": "8d81fd4022d87fba5f41b762cc17e552231cd437c40fd5346ad53d72cd8381076ade692d00ddc63ea00fc192a9ffa32e22263cc16744ba07f442589e50cdd747272ba6f757f878fc5f147edd3e7234ee4776973556925b1e1659fd15db32212f8f19dad230e47c8f087574dc0e6e70579a4c73aaecb15c249260dd4b727a5b8e9d596e2c71393c0138bc7038e0c7dc672d438dd5d280f610d5fbca4fa8214f5e41825f931bab72f652c373457934d50edc51fb80980bc7b1f081ac944c92fca6944879718e1ef5e3a1242fe2fb066fa89339d20747d21ec51fc7732ceee1ccb2f7373f98e4e0477dfb7fd0ece57f86a8f18c276c850c3b61b5a7d9aba53cc9d91f8ff1d6e3d7de8255f5863868e886f897870daef030b0200ace8aa7e5db793a6cc72adb74ce322bd22bb9b176ea79f1ec7223b39f93f14ad32d89a7cd2579e5bcfa9e60b49ca8ffe6bec02fc5085b91c93b2784c6c53ae0d33d638589a2068b3e69a7bd627cb0655108c74eb43c4119e550b64f880ced6efe8a953a3797a9ede35a508b19b6d3e998ddde382d9dfdcd32c019f7ac87e9bd883db93cae2a5b4850ec07f0e5fba072a47d06d48f45f5382f9472799da629445becc60145f89224e05f8ee7e75c84df67131d345a3cf4b957bf16907062948851a95c423728739f0f283a733de39b83f8f3c9b0981719ab211ad1be231034abb8b49685134145c229ca7a63bbbfec5acea53d7e12feed6511838edf134ce99bfbbc420aefb68719737738943c899564c53b0b56af47657a8195ea439ebdd8b37a1d02d479a9e59623138072b2d16ca8a9595a4792a5f5db4018088286aaf9018c63d54ca180813c735852dd69356237100a3eb911c9449881c9087d2c2fd018cb09497237dd549059d9fdddb193e209c944d9684c9e1e11e6459480cc4d674f7bff71cdf78c3eb2b073d319ed9a88d596c00626f325b5fe642a8af75a72e9414b7d3d32c0302d11d351889aac8e52400bd3d406aff99781a9ac772a6703fd4495cb71b01465af3e19139bf92ee1085579215f6fa51bd944ef258662ec6526ceebbc1c79fa0c03121eb62b920a90e0661abb0f3c15c41bb6e971cad8545916ff9cdccc054b3a270f969f513d0f7675eb3fc0cc64e324e518213ec5f9273265639a6605b55877073f41c3f8dc9e41dffb16c58837efc4e54e55f6c44466ddc6739e73969b6749d6e7bff8269cca44878512bd2cf852231aa2446125988f89742f98d78f0952e5bd58421470165440b372bd8a238036df64ba6a6fa41c2eeeaa3c27f8f8e6e080a0c337fbc8645d086413a19648ccd496a09812dfb781710ecfda7139e79fe08f374d651287ca3b3de232ec07affbd91dacd84fa3b24daa5a76a1b2241766fef308b79b28106787266f2534ccf0fbf791f9bd"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "",
+      "referencePointHex": "2ce9a5949467e64c99b715981009a5e5aaeb069de73ce20582daf644b5d36bc8",
+      "encryptedContentHex": "7ff823eb4d81d475e78267202270f80a"
+    },
+    {
+      "build": "browser",
+      "variant": "bytes",
+      "content": "",
+      "referencePointHex": "4c26499435da584af38d61942c5f8180c4104ee1d08647241e2943f9b141e8ae",
+      "encryptedContentHex": "8a7003ee8f44c41e149fbee74398e7fc"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "a",
+      "referencePointHex": "50b2dabd3d0c02264e1ddc7fd89bcc7cbf6be5ec9c2b673cbe4a2c74eb30c50a",
+      "encryptedContentHex": "f8621825ba2f3ca142436f931aa3b9e6"
+    },
+    {
+      "build": "browser",
+      "variant": "bytes",
+      "content": "a",
+      "referencePointHex": "52de39b4d6f282be4d2b8a48424568b521eeed99999798baf3c43b49f5fdd5fd",
+      "encryptedContentHex": "f435373f15d210267758b33977e54ea7"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^",
+      "referencePointHex": "d0e3a0a74b0f7d1e3a62b316cdc1079f8a80cf2bbdadf7059e82317421a0ffb9",
+      "encryptedContentHex": "e67068dda776ac00e455720756112c11d53c154f1923ca60997e42e851afc070766506ef3837f4389c84830f6e89eaf072a7614240d237b563dc853c0319fe09"
+    },
+    {
+      "build": "browser",
+      "variant": "bytes",
+      "content": "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^",
+      "referencePointHex": "a789925ee6ff7f7f7861d03881b9b7156056d2a1cd4c24d0cabc5bb2fbc02c5d",
+      "encryptedContentHex": "32c954a7812eb5312ef876593ba54b88f80018fbf3c67ced9829e07888750335aab529c0983772329e1a5c20cd999a68b607e27a084f239a9e273d454a84b9d4"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "{\"gh\":{\"accessToken\":\"ghp_0123456789abcdef\",\"host\":\"github.com\"}}",
+      "referencePointHex": "0eacbbfd0b623c2c39f3b599a11a16a48ae556fb19c3ee7fab69e2cb2524d2b3",
+      "encryptedContentHex": "b5871d0095bf37cdb000af74ce66e68ac0cc692bf006eded3165c36bc4f2afa30896c2daba1236b02d5c1476423206bb7bba091afc181f07b3770ec4a3c51844d89e35cf93b261aec703b12666c722fb"
+    },
+    {
+      "build": "browser",
+      "variant": "bytes",
+      "content": "{\"gh\":{\"accessToken\":\"ghp_0123456789abcdef\",\"host\":\"github.com\"}}",
+      "referencePointHex": "7729eb7b72d83822c38ab087dabf5f8c08891be7ce079343d9d98a76a0ec5fb3",
+      "encryptedContentHex": "146a57e774dce2004947415b1a459c49cfdf175ffd4da9ad0c97718c4fec4fefee2fe917d4b9bcd5b614ac5d55593600de6345c2c578b46173c061172f90b5842478a8f2f08e361047f380bfec3a874b"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "referencePointHex": "ba28823ef563881d275b706e1f8e08d0aba0754d8d10f257d5a0a6affb72170f",
+      "encryptedContentHex": "8c0c7718580160db7c4fda76e5b35a8ebf7bdb15e4252d9de4b996aa5038fa11fb15d0c8924b8ee9e285dfbfe689e46302d55c5124a3e51ca92d8cbce7bfab81cd6486067289eaa4b106f1d9da1b7016d59c628169d05652dbdd1d9a2ddfd1201b1a8955272df2acbd4b4e8f7fefecc71d9fa22bb730118d8dddbb4c3eb4a85476d5fba3cc16b31153ef3cdc7e4cdfb9e36412d8ed7f2766266952fcd110de2164d6483936b4b40aefa10773cdcedc0c4217a42a765abc17a9204b8924bfc81798490ec7cb1909c9db7e71c176f169119c188a53f670e152e34ed864aa7b0f2c659a7fbd2ebe98d6a9ea030fc84613458b339ff598b6cbb7f9db8465b6da7c5cb910c98e325655b660f333e173a0af46597810ec783f293f4b4d135ad9f2c5fce831a816e88d938eacbbb87adbe231541ece0c2043dddb756170fc70fac64025b9d320cd3f1d8302e5b85d93c0655bd54523d04d160e55f223781367380620762179afb5386df07a99d8b6f76efa6c091078fc8b1d0e3fb28304182ef591b203169e668b44c5f5f5696651ed6379af2a0c812ca47d838f90693dbece80ecbed38f6a9f4455ac8a2e66c4da3406f3b130a1a7de20df1ddcf8aa407d5976a6f50a27a5da18812657275f0b7add6da4ae305d6f70fb439a30290ac6e27eee98ddb72a45c98a1b86b594941b8c18a02e96882c54e57a1525589c5dfda912bec749bfb4c0137c187899c494497eefa4ab8cb969e669c9abac35aaf467a4d1b10e45a614d368ec017eefded1b7a8daa6dd9ad88167afb2118999ab7deb264b7c53c7278ee73f19b922069b4b4b3b6f3df3ab0cfddf74ef5a4229de22b5dedb61ae7fabc688785c45d46a20a1d51ba95ae3bda304d34d37a6283f86c99f8485c2882dabd70496605b67a74e7edc029a28d7dd28768900ae1c1056dbe1efc806b85e73c3f8351a40d091d8a7fbdccc94e63820728834aeb308ca9b2e5470e624ec33cbeac42e93436f71cff0ef914b2ec63706a852c2f525ff38cedfea01e60efe53db00a327af8e3e564228cdc3db94e2e3da01a3b38e031037e3c331d4905ccc42db4468d81f8c5a19782df41706e5c0b376315bd230d9d7ef124e0344a5ab256d16bfbe07969475b1a9bba9394656dcc3b3da7e9d08362882ef31f974a4ee2b9c21474dccd339c0bb5599dd68b15571ce685a453eaee418ad9dff4bdbdc7d6d6c1a3d4b91c44651e202dd21256f0362621febec9ec7bfd9b7ce15319b0808d246d640655d69cb4e187f7c50a3d7505166635070c31eb0610835528911bce50826f9034d577c79341c69327c97770f979944f69cad28f5323e22827472bafaad2574ef25e1135c2896120a17739054ad55bfc2e1192197f3c035448f20cabe7df3cae79cd960b701398b018c358f9a3c2a6fae"
+    },
+    {
+      "build": "browser",
+      "variant": "bytes",
+      "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "referencePointHex": "b373a780c9e304b3d4a8629ddcce1093f6b951f4f01752b8e3c3248fb876c9ed",
+      "encryptedContentHex": "5f649a4778846d242536ac51379f9532a015b2f15275263e7b5fa2088336b6083c8cc988e485f27ba51343619f5cc5aab4879aa14a8f8429a13b906a038e00668a454c5b07224aff079fbb446cff1f5460cc3ffa900bf259cb3072c6fea12e6d7d3d868e6c1b642547d2a9e68a3401af1da8735208f510fd9f8c4dc0052de56a358c70ea84ae5d4e0aa36427b5fc92962a178eb8b9125c0317f82c4c2a767aed7d20783b5672d0e79babe77a87f18f483b6015a53e60c1997a90deb0beebbcdfde1e899f2a0d0858cda90053c1ea449c55cf6f88eedae112d30956ed356aef1307773a4b8c711bb30219eb1a9d02b56601b1772f2c98a811a377df479ec224141953953a1fa3e9bad0faab6a931b7004797f4e335b2f5f57d31b755b84756f2796366703f978d1db20022311c1871378b70fba5b9ac41de86f54b9bd0875d48a82d3727deca0f64ca141d1fae4b4d90b37f933195264cfd1a4ccd06bb743f82d7de3f3beafbf451e1172ab7fc16b2e2b2aa3b2c0982ec23bb5f84cfa15d5e78cb357728196eff538cffef3c00d8d0bbf79a9396a79799d77d3502f92f99e0a68abca15ff2e6c72fb44ba20ada535792525e6aa23aca2da0bd6357b5b1d10073a57c1a2cea4962a518a146562aa0d36c4a52ffa367eb607c4a335909e24161ffda0105e317fd94efd57fff333cbde74a55b0486073445bf693c2fc3074c7f17f7cffc5e598a260425eb2c6e6b49bcf67924420a8ebc304348abb71c34601ae56296c52b86c57c2f2bd5e6740bc39895467ab2dbf7f79b4af55456001092abd50b8729426b3d4407b9ad74e8dd97d6b70b9406aa71fde00573777452bd380181f2b951ad9c4005f5e91508b2e072b29df82d8e7d432c3af60b97179a4586d44aa0089046442904fa99114ae34e5041607f23670d94aba0c79191cafd6252f4e78144da16d6960ea4cb412a84df8497fceee23453a2069f2ebbbb392568ef3c389a6173f9603d028cc4aa6fd61902083773d36fa64477d52f3ae330f6428d4c71e361066b16b97491222b5b3ac8c4fe842f5fa02b4823ba0123ade0797e5b615262d8d114349efce9b2d3c9106840620b86153ad2f5dd00b30aa1c487d39b249a9a7b3e98d44d95f095db6f8b68b1770d7012bbf151c39b312c905f43300e50d342a8d83503a0e876d5b8e455d87adfd3260f7aeae408f6d39c358a51dfe200ac01645b38dbf17ecfdac0da489ffca577ef5f16eb6dd8858cabe8b42984a136b85cf9f9c2e90acbcaf35effa5cf577fafaf64a0f6f2916868fb04a746ba0ad94b85be75aade4faa42437a42eec556680a46bcc4ceee94668721986e589d597ebb3df83d9e805c7a101838410741a56adad7e3f62f01668b7f51660fcb1f64429daf24aa0d9c95ef1681651e0309e8613534"
+    }
+  ],
+  "diffieHellman": [
+    {
+      "build": "node",
+      "context": "",
+      "hashHex": "b98cbf3bb629d2bfec71f060418d3d4a5eb2d6e950484ef7bb7e68369075d5719d025d133e439e1de030f38b7620f34d4f1f726b4a759950f4c900507ea93c49",
+      "rawHex": "fa31a9135f4e257ac5679a5959c540de0cc3dfcedf189fb229ed87cf8a9c0a56"
+    },
+    {
+      "build": "node",
+      "context": "some-context",
+      "hashHex": "104bbf6920d2ba512828030774e1378349b40ca6c614437ffd1563e58e9407cd9309ed261f805e5d8c9793cf8cdcb75b6997b155a20c35c0bd93a303faa08045",
+      "rawHex": "fa31a9135f4e257ac5679a5959c540de0cc3dfcedf189fb229ed87cf8a9c0a56"
+    },
+    {
+      "build": "browser",
+      "context": "",
+      "hashHex": "b98cbf3bb629d2bfec71f060418d3d4a5eb2d6e950484ef7bb7e68369075d5719d025d133e439e1de030f38b7620f34d4f1f726b4a759950f4c900507ea93c49",
+      "rawHex": "fa31a9135f4e257ac5679a5959c540de0cc3dfcedf189fb229ed87cf8a9c0a56"
+    },
+    {
+      "build": "browser",
+      "context": "some-context",
+      "hashHex": "104bbf6920d2ba512828030774e1378349b40ca6c614437ffd1563e58e9407cd9309ed261f805e5d8c9793cf8cdcb75b6997b155a20c35c0bd93a303faa08045",
+      "rawHex": "fa31a9135f4e257ac5679a5959c540de0cc3dfcedf189fb229ed87cf8a9c0a56"
+    }
+  ],
+  "elGamal": [
+    {
+      "build": "node",
+      "context": "",
+      "kind": "hash",
+      "referencePointHex": "51b17a61bb1bce664df73213438bbd4ee72eb16d66227d4b36674dbb4495566f",
+      "sharedSecretHex": "1e42288a1c1e721c0e716a2da04c3534b525c487d9b6f0f1a61d804d44863265afbff509722ec60eecbadc69bab47503e19b4a106b0726d9334e6733eb1dfdd9"
+    },
+    {
+      "build": "node",
+      "context": "some-context",
+      "kind": "hash",
+      "referencePointHex": "91c6af04486aab88e3a905b84548ae8b904081003dcee89f9600ee7ed4d3f5eb",
+      "sharedSecretHex": "1d6273969c7c5b34d0f02fcf2ae114239642740743826b950bf4b9e31e92398a7de5d42382995dcc607e2b1a801ae4c25cc4c7e5e638e80439324638db4b19f6"
+    },
+    {
+      "build": "node",
+      "context": "",
+      "kind": "raw",
+      "referencePointHex": "176811fd7b5a2d7290418c83aa93d1aa678a023b7f12ff481f1a05cdfc5530e4",
+      "sharedSecretHex": "b8a1257938920b5be92d3c6a10c353441d514a771b929ea8ad906cf7aaffd47a"
+    },
+    {
+      "build": "browser",
+      "context": "",
+      "kind": "hash",
+      "referencePointHex": "47f956ca147e6a6ef0429d1d4544fa1b9d2656463b84b91f838f796e1870c180",
+      "sharedSecretHex": "2acf6fb2e56a6d6c2db37e49f4c2bf76c471be9e4dc17b9026f0bca3d892b972c739139b979a84ff1d3b0d7b40e1d668ce622db3aae261000cc253660df9fa22"
+    },
+    {
+      "build": "browser",
+      "context": "some-context",
+      "kind": "hash",
+      "referencePointHex": "21e4e610e8d3f6c829318f79ab2845322898fca26fed53b145c70216430cebc8",
+      "sharedSecretHex": "369c3b407a552c03f4fd59e0a5f3451a3e3c98cc74fbbdaa5c2041ca67954f97ef5287cb4fdd4d54193709d4363379c5b404501a733c5579d12350972d852c73"
+    },
+    {
+      "build": "browser",
+      "context": "",
+      "kind": "raw",
+      "referencePointHex": "3013186534bb59c95922f386cfbcb85c8361bb37d535e0153151fe9e8417f6bb",
+      "sharedSecretHex": "0e0494d9fe4eb89b9650695595439935e237dd27977b7501cf0d241487dc4f7b"
+    }
+  ],
+  "asymmetricOld": [
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "",
+      "referencePointHex": "c629ffe90483b7e82124ae4d36b6f0992cd4f89ebfecda921cbbc0acac56bcae",
+      "encryptedContentHex": "649e37441bf74f5c636dd1eb8b98d2a1"
+    },
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "a",
+      "referencePointHex": "00a42c8eb9d4ae5657e2707f7e02a04ae31cc35d83f44153d746f5cb90691492",
+      "encryptedContentHex": "39cd245f51a3f73c3b8a63cbcac5efbe"
+    },
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^",
+      "referencePointHex": "745023d2de260d67b30a933baae2f30ca3283398dff65c17e24926a62f68f06c",
+      "encryptedContentHex": "f5bfaaf47a9b8fde5e8c85edc3645c27a7e0acd0598cf91e00897c6df24781aa215d01b6b261e270dbf185c73d047c718e9b89c5f7adaedab76f94136c86a3cf"
+    },
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "{\"gh\":{\"accessToken\":\"ghp_0123456789abcdef\",\"host\":\"github.com\"}}",
+      "referencePointHex": "c5c2543ec4ddb63be0741ed558ced0ab612a667765d50ceb27cb5ac83f7a16a9",
+      "encryptedContentHex": "fedc0d9bd3c35d26fa5d5d05e3de6fc62f73201701604732e6c0ced0611f47b89753b812a89a9d67a8fcca3f9e061bd1681ae9905043e922ae647a53ba11793eebc9fd563a421f34ad05c6b010a248f4"
+    },
+    {
+      "build": "node",
+      "variant": "hex",
+      "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "referencePointHex": "60b7fdc4378a35db3dd49a2fba8d7b527405243dbf7d57fdcdd1946859d89cfe",
+      "encryptedContentHex": "b0222f5b0cfe2c624e7e885b93abab233c3b1bc7aeeddcc8fd4899176cad74055d5cca5b05ecae2fed5e0aa31603fbcb750f68e159a01c6b239f7398cb35136e9e315388a3bb88c9916cc49bb693a898a76c59e933a0088694720dc4d7a6ccd04fac810dd65a2dc2dc0a3ba8472df61fdeab91bc86b04a1316a99bfe04c874e9d05e7067b4bb07c555c5290ed94463fcbac3513dedfd2f361143b1ae6c1190785c0504045b18f00d74055b8ee77c2df1d42b39ac6ca5ede79d8a75ba6da698c8a23c3ea3b4711a9b7f20bd09ad372ae90621c3d873e2fc0822840a102bf6fb4c5d3705c42b12387152ba94a4ae7e3ef3ee769fc14b97439665170021ae9ec85ef2587573d771d30bc1a11b1a9731bdcdd5f8bec799dc0583b7779452e1c909c226b12696c63438bb5d40a422b0b7d0f98469bf84428b13212b1f1d010e39403263c0775f8fce9ded0fbd2966773dc98991c5b03e8f6f4e049b30967e7c879cf09b4bde62eb36842e0f91bed89ca9d6d38f59db2656fae1cd867562210efd2f04abade56d1c6cdbf22d48120ec4da354a19aa0360dcf7a3c1fe530288fc8c753ea8620e62828bc376c0348bce2cbc608214846193a585a2251866da890d6ba9a0fbbd92dc5c0d280bb873f5ce4a55c199063199755b19d9ac8f99bc260f1e3ff26b0e12fef39aaf1dae7972609c84418413b6aa45e19f6ad88b31040f11730148b858bacaf3b7f7966420d4c89ab5189fd1963772c9044fabbef9ac2922aaacf490c182c6b735700afe1858ed53ece51aac754f8dc723fc5eab36bf8aea070e832280f909a94c358e0e3c8a3a920b45f27c923708189b0c1011ba0d6f8f19a6665a324e87e0c5cb697800d654022b5ebd0b08a96301b849b14577558c25724a105a96a683fcf5b1ecfc7563ab6aa4ea07bfc888ca377e9e129a04e8aea42b9e2d4df2fa20cdc94c70590ed00c1a59a1d94273363c792f532923eb9a7167e93e122bdd7a1fc2eacb3d50ae519c281e57a3c4032740ee0e5e9a2a8f3da43cf664b13310208469b4780781900275fed566e8974b24f8083518d7e9e0968ce4ba95c4addf4d42408e9518f5f122673da47e58c8c671c810ae4a921e17265b9800cd75df4d49318b0aa9a9319ae8658c17970852184d27dc21cd44d36345e06687a902a05216c9c554c4ea16e3a0ed6ee450e2ccbaf4b6ed4c3e508fb926c29c38500e904179492d77b3c26cd73610eee965a3aa41e0cf4a27d7d96d936d87d282bae062c6ef40af72661b0f7f59159b8d2b9247996167f2b3f6e8b60b580ea8b87c53acbaea661f310642a503d8cda3927d325bc55edd01e07976ce8000f08ff5da32588c5f7b2c0ab9b739511cb03f3f1cf5a2a03351d08e5dd369e2237b6a8d6dc47ba0f20eb9574d26c4d54df8d426a511"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "",
+      "referencePointHex": "c1ad36e2718fc0d5d46bf69ef92e59621d8a3e329d88de9702d5086a700b40d9",
+      "encryptedContentHex": "13772d6834420ffaff78b5fa714822f6"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "a",
+      "referencePointHex": "1e47aa4dea0e69ddd5f86b0290bf085d2fb38eeb7d48ec87687066b196f79dc6",
+      "encryptedContentHex": "a6f42593b1df384028f67d300dcbc3fd"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "testorritestorritestorri - asdaf 456789 äö90ß´ä-`''°^",
+      "referencePointHex": "c54c10d63c9e20c8b82d9f5a0446fda9ab69262360fe242c73fde5377bf6bcd2",
+      "encryptedContentHex": "244c954cbc8926437e9cab4942e2b87075d95433c5c838b2b71cbb6784e31717e95d4372523ac603a445a6f1083323986c8ce076fb347f2cdfa8724e2d05bb30"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "{\"gh\":{\"accessToken\":\"ghp_0123456789abcdef\",\"host\":\"github.com\"}}",
+      "referencePointHex": "8b5a6e20648c352f7fcf9573df36f43e4408bd3f39bb78db82083af03e070dd5",
+      "encryptedContentHex": "36523a5fc140df515f70692c44d823118f0cecec4706ad871035664b06d3c3845054148556fd11f9471323f351877285f7d42966917d185c1702bacff446a5b3725019493df59f508b9c71421df2f5d3"
+    },
+    {
+      "build": "browser",
+      "variant": "hex",
+      "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "referencePointHex": "c2e2359480d41442e6675a5bb615dcb85e8725279b71c62c9bc613e062a26eca",
+      "encryptedContentHex": "3912483d1bbea2b1f61cbf29178ceb56a64804b469c6e63010055c8fdb3ce99eec84c86cd3ea8bec566b5c0b54ad6d12123f9cba2aef2ef2782c11734a8260d8860da55f7dc0fee36a667fa6f875390cbee4d72ccbb0b1fee616da4c0119685d72ebf0f2fd06cba214b3b3073c9f5d1837844577e541c4fb05994e9ad6175e92abb2acedb6f80675644df5f494d8b356b97ed352aea924284de848181fa58b0a3242ba1beb61ac878cd9cf6171fd83861fd2a8c8c312cd7ba7045407f403d23da4492c827010658860d80d62126b6060a0b520d86be5f16cbc56aed1cd0a2b07720edd1d1abfb36abb2bd4172bcca45a136c16b6990fd5b949289d88e2b5524bf9ea594bb56372ffb7b62ebdf4773f652b6e5f1725f0711d981c586a43654cc1c0e7782cb7ab39a481c0827c0244599a41b08cce6fc8d649d8059275a9fc8ab23c47f0945269de15ac5989bbf05522be9c417674afa5b7b5b7281013d5408e25b1d557074dd99fa1ff5409e0b8ea99f2905a2daec13d4d33339029f88eb276b382e42ddf5c15751b2002634c5837ed0f778efdfb949d25b5c89ef9bd2fbaa6bb53176837be54e053984e39e95df5b096ee03b850d00e7ffb84ed88199aaefe32d1278a68fa53eb1f913f3ac1856dc5aeaf64d051437622346a95bca8832d2eef0daa182acae26fe5cd382c70ed3e1c1d41c541492d201170532d5df47f085fe350bbcd9afa5b8ca89aa2e11edfce6206f4a1c1b6dc3682acefb4d8ec799bd05243f80cb2b66f768c0bd87c5f747cd8273f614a2eacf7bef6126257a4d37f306d7686ae638ade2a1b909e3cc9dc7024eedf16ef2e4d95bab94cf3293a362b4877aac8d02cb30ebdcdca6a89898e07793451f424e19d8a7bbd7dc417c08938cad4842a2f4a24a3a58e10560ebab9339fef7b5b4661152fcd48c245c414e52ef51855c7e810a4c123cb7ffb600f85ff2a113fb6ddca09e932f380a9f5e08d0630044d55be8f27de28b2ce10e20f7db5f07dd538289571efe2a8bcffc8172af966bf164530a64cbd80cf5b3093b581a94c683aaf9a7d795fc68000dec15602ac0d66b9ae3f7c2aeff59fd42fa17c4fd7ea83ac3902cd06d7041d350b4b3a519c2d6f4ee89755b4dad1d0a2008e734f7a284fd43823192fa9e4936afb356d2bfff981c112072e388087affc6ccec1b03c0b211d11c62e253961935d4252dd400d512af9f164ae235f1fc7044dbb0beda83dd0ec0bec8c4998589cfedf0e926cc4d9c62339508f2570e70724cec4d3a0450403ab3691051f0b45b160f9b12ee8f5d04bbd569c3b8b11105891ed19af8b39212ebbdde61d74ce246b718109d50e987168b79c13b6ac589cab131f76c44622b33109f4a74e78bfdb4c681d21739205f5022889800e07ebb98f71400392823a6a43"
+    }
+  ]
+}
