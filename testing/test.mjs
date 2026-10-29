@@ -405,9 +405,8 @@ test(`asymmetric referencePoint bit flips are rejected`, async () => {
     for (let bit = 0; bit < 256; bit++) {
         const referencePointBytes = s.referencePointBytes.slice()
         referencePointBytes[bit >> 3] ^= 1 << (bit & 7)
-        // bit 255 is the sign of x: -A has the same Montgomery u, so X25519 gives the same key (malleable encoding, content intact)
-        if (bit == 255) { assert.equal(await m.asymmetricDecryptBytes({ ...s, referencePointBytes }, hexToBytes(bob.secretKeyHex)), fx.contents[3]); continue }
         // not on the curve, small-order, or a valid point giving the wrong key
+        // bit 255 is the sign of x: -A gives the same X25519 secret, only sha512(shared ‖ A) makes the key differ
         await assert.rejects(m.asymmetricDecryptBytes({ ...s, referencePointBytes }, hexToBytes(bob.secretKeyHex)), /bad point|Invalid public key|Decryption failed/, `bit ${bit}`)
     }
 })
