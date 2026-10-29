@@ -4,8 +4,12 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import { pbkdf2Sync } from "node:crypto"
 
-const fx = JSON.parse(fs.readFileSync(new URL("./fixtures/v0.3.1.json", import.meta.url), "utf8"))
-const m = await import("../output/index.js")
+const fixture = (name) => JSON.parse(fs.readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8"))
+const fx = fixture("v0.3.1.json")
+// v0.2.0 DH = X25519, the same as main again
+const fx020 = fixture("v0.2.0.json")
+// fallback.test.mjs sets a suffix to get a module instance without native Ed25519/X25519
+const m = await import("../output/index.js" + (globalThis.moduleSuffix ?? ""))
 const hexToBytes = (h) => new Uint8Array(Buffer.from(h, "hex"))
 const bytesToHex = (b) => Buffer.from(b).toString("hex")
 const { alice, bob, symKeyHex } = fx
@@ -90,15 +94,6 @@ test(`legacy symmetric ciphertext decrypts`, async () => {
     }
 })
 
-test(`legacy asymmetric secrets decrypt`, async () => {
-    for (const s of fx.asymmetric) {
-        const { referencePointHex, encryptedContentHex } = s
-        assert.equal(await m.asymmetricDecryptHex({ referencePointHex, encryptedContentHex }, bob.secretKeyHex), s.content, `${s.build}/${s.variant}`)
-        const secrets = { referencePointBytes: hexToBytes(referencePointHex), encryptedContentBytes: hexToBytes(encryptedContentHex) }
-        assert.equal(await m.asymmetricDecryptBytes(secrets, hexToBytes(bob.secretKeyHex)), s.content)
-    }
-})
-
 test(`symmetric roundtrip, randomized`, async () => {
     const keyBytes = hexToBytes(symKeyHex)
     for (const c of fx.contents) {
@@ -118,8 +113,9 @@ test(`asymmetric roundtrip`, async () => {
     }
 })
 
-test(`diffie-hellman matches v0.3.1, both sides agree`, async () => {
-    for (const d of fx.diffieHellman) {
+test(`diffie-hellman matches v0.2.0, both sides agree`, async () => {
+    const { alice, bob } = fx020
+    for (const d of fx020.diffieHellman) {
         assert.equal(await m.diffieHellmanSecretHashHex(alice.secretKeyHex, bob.publicKeyHex, d.context), d.hashHex)
         assert.equal(await m.diffieHellmanSecretHashHex(bob.secretKeyHex, alice.publicKeyHex, d.context), d.hashHex)
         assert.equal(await m.diffieHellmanSecretRawHex(bob.secretKeyHex, alice.publicKeyHex), d.rawHex)
@@ -128,8 +124,9 @@ test(`diffie-hellman matches v0.3.1, both sides agree`, async () => {
     }
 })
 
-test(`legacy elGamal secrets are recoverable by the receiver`, async () => {
-    for (const e of fx.elGamal) {
+test(`v0.2.0 elGamal secrets are recoverable by the receiver`, async () => {
+    const { bob } = fx020
+    for (const e of fx020.elGamal) {
         const recovered = e.kind == "hash"
             ? await m.diffieHellmanSecretHashHex(bob.secretKeyHex, e.referencePointHex, e.context)
             : await m.diffieHellmanSecretRawHex(bob.secretKeyHex, e.referencePointHex)
@@ -291,7 +288,7 @@ test(`symmetric decrypt rejects non-Uint8Array input with TypeError`, async () =
     }
 })
 
-test(`ed25519 lengths are enforced (noble)`, async () => {
+test(`ed25519 lengths are enforced`, async () => {
     await assert.rejects(m.createSignatureBytes("c", new Uint8Array(31)), RangeError)
     await assert.rejects(m.diffieHellmanSecretRawBytes(new Uint8Array(33), hexToBytes(bob.publicKeyHex)), RangeError)
 })
@@ -351,14 +348,13 @@ test(`small-order public keys are rejected`, async () => {
 // bob's public key + the order-8 point: not small-order, but not torsion-free either
 const bobPlusT8 = "f7f44d8ed83ce9887a1aa98973af07aeb60b94727755a55b03c5254382422952"
 
-test(`public keys with a torsion component are rejected`, async () => {
-    await assert.rejects(m.diffieHellmanSecretRawHex(alice.secretKeyHex, bobPlusT8), RangeError)
-    await assert.rejects(m.diffieHellmanSecretHashHex(alice.secretKeyHex, bobPlusT8, "ctx"), RangeError)
-    await assert.rejects(m.elGamalSecretRawHex(bobPlusT8), RangeError)
-    await assert.rejects(m.elGamalSecretHashHex(bobPlusT8, "ctx"), RangeError)
-    await assert.rejects(m.asymmetricEncryptHex("x", bobPlusT8), RangeError)
-    const s = await m.asymmetricEncryptHex("x", bob.publicKeyHex)
-    await assert.rejects(m.asymmetricDecryptHex({ ...s, referencePointHex: bobPlusT8 }, bob.secretKeyHex), RangeError)
+// X25519 clamping makes the scalar a multiple of 8: the torsion component drops out, nothing about k mod 8 leaks
+test(`a torsion component of a public key has no effect`, async () => {
+    assert.equal(await m.diffieHellmanSecretRawHex(alice.secretKeyHex, bobPlusT8), await m.diffieHellmanSecretRawHex(alice.secretKeyHex, bob.publicKeyHex))
+    assert.equal(await m.diffieHellmanSecretHashHex(alice.secretKeyHex, bobPlusT8, "ctx"), await m.diffieHellmanSecretHashHex(alice.secretKeyHex, bob.publicKeyHex, "ctx"))
+    const e = await m.elGamalSecretHashHex(bobPlusT8, "ctx")
+    assert.equal(await m.diffieHellmanSecretHashHex(bob.secretKeyHex, e.referencePointHex, "ctx"), e.sharedSecretHex)
+    assert.equal(await m.asymmetricDecryptHex(await m.asymmetricEncryptHex("x", bobPlusT8), bob.secretKeyHex), "x")
 })
 
 test(`verifySignature is strict: non-canonical encodings and malleable S rejected`, async () => {
@@ -370,6 +366,13 @@ test(`verifySignature is strict: non-canonical encodings and malleable S rejecte
     const S = BigInt("0x" + Buffer.from(s.sigHex.slice(64), "hex").reverse().toString("hex"))
     const sPlusL = Buffer.from((S + L).toString(16).padStart(64, "0"), "hex").reverse().toString("hex")
     await invalid(m.verifySignatureHex(s.sigHex.slice(0, 64) + sPlusL, alice.publicKeyHex, s.content))
+})
+
+// raw native implementations and noble disagree on these (make-ed25519-edge-vectors.mjs), main must not
+test(`verifySignature edge-case vectors give the same answer everywhere`, async () => {
+    for (const v of fixture("ed25519-edge.json")) {
+        assert.equal(await m.verifySignatureHex(v.sigHex, v.keyHex, v.content) === undefined, v.valid, v.name)
+    }
 })
 
 test(`non-ASCII and large content roundtrip`, async () => {
@@ -402,7 +405,9 @@ test(`asymmetric referencePoint bit flips are rejected`, async () => {
     for (let bit = 0; bit < 256; bit++) {
         const referencePointBytes = s.referencePointBytes.slice()
         referencePointBytes[bit >> 3] ^= 1 << (bit & 7)
-        // not on the curve, small-order / torsion, or a valid point giving the wrong key
+        // bit 255 is the sign of x: -A has the same Montgomery u, so X25519 gives the same key (malleable encoding, content intact)
+        if (bit == 255) { assert.equal(await m.asymmetricDecryptBytes({ ...s, referencePointBytes }, hexToBytes(bob.secretKeyHex)), fx.contents[3]); continue }
+        // not on the curve, small-order, or a valid point giving the wrong key
         await assert.rejects(m.asymmetricDecryptBytes({ ...s, referencePointBytes }, hexToBytes(bob.secretKeyHex)), /bad point|Invalid public key|Decryption failed/, `bit ${bit}`)
     }
 })

@@ -18,8 +18,8 @@ Evidence:
 | asymmetric | 0.3.0 – 0.3.1 | `asymmetricDecryptV0_3_1` |
 | signatures | 0.0.2 – 0.2.0 | `verifySignatureV0_2_0` |
 | signatures | 0.3.0 – now | main `verifySignature` |
-| DH / elGamal | 0.2.0 | `diffieHellmanSecretRawV0_2_0`, `diffieHellmanSecretHashV0_2_0` |
-| DH / elGamal | 0.3.0 – now | main |
+| DH / elGamal | 0.2.0 | main again (X25519 since v0.4.0) |
+| DH / elGamal | 0.3.0 – 0.3.1 | `diffieHellmanSecretRawV0_3_1`, `diffieHellmanSecretHashV0_3_1` |
 
 A developer who doesn't know which version wrote the data tries the functions of that operation until one succeeds.
 - Asymmetric and V0_3_1 symmetric fail loudly: wrong padding or a broken salt throws.
@@ -66,11 +66,12 @@ Salt layout (written by 0.3.x `saltContent`):
 ### `verifySignatureV0_2_0(sigHex, keyHex, content)`
 `ed25519.verify(sig, sha256(utf8(content)), key)`. The message is the 32-byte hash, not the content. Same contract as main `verifySignature`: `undefined` if valid, an error string otherwise, never throws.
 
-### `diffieHellmanSecretRawV0_2_0(secretKeyHex, publicKeyHex)` / `diffieHellmanSecretHashV0_2_0(secretKeyHex, publicKeyHex, context = "")`
-- Raw: `hex(x25519(scalar(sk) · B))`.
-- Hash: `sha512Hex(x25519(...) ‖ utf8(context))`.
-- elGamal recovery (0.2.0 `referencedSharedSecret*`): the receiver calls the same function with their secret key and the `referencePointHex`.
-- Main DH is Edwards based (`sha512(kB.toBytes() ‖ ctx)`), so every secret derived with 0.2.0 differs from main. Anything keyed by such a secret has to be re-derived.
+### `diffieHellmanSecretRawV0_3_1(secretKeyHex, publicKeyHex)` / `diffieHellmanSecretHashV0_3_1(secretKeyHex, publicKeyHex, context = "")`
+- Raw: `hex((scalar(sk) · B).toBytes())`, the Edwards point.
+- Hash: `sha512Hex(kB.toBytes() ‖ utf8(context))`.
+- elGamal recovery (0.3.x `elGamalSecret*`): the receiver calls the same function with their secret key and the `referencePointHex`.
+- Main DH is X25519 since v0.4.0 (`x25519(...)`, identical to 0.2.0), so every secret derived with 0.3.x differs from main. Anything keyed by such a secret has to be re-derived.
+- 0.2.0 DH/elGamal secrets need no legacy function: main reproduces `fixtures/v0.2.0.json` byte for byte.
 
 ## Converting
 
@@ -79,7 +80,7 @@ Salt layout (written by 0.3.x `saltContent`):
 | symmetric ciphertext | `symmetricDecryptV0_3_1`, then `V0_2_0` | `symmetricEncrypt` |
 | asymmetric secrets | `asymmetricDecryptV0_3_1` / `V0_2_0` / `V0_0_7` | `asymmetricEncrypt` |
 | signature + content | `verifySignatureV0_2_0` | `createSignature` (re-sign with the secret key; a signature can't be converted without it) |
-| DH/elGamal-derived key | `diffieHellmanSecret*V0_2_0` | re-derive with main, then re-key whatever the old secret protected |
+| DH/elGamal-derived key from 0.3.x | `diffieHellmanSecret*V0_3_1` | re-derive with main, then re-key whatever the old secret protected |
 
 Keys themselves need no conversion: secret and public keys are identical in every version.
 

@@ -1,0 +1,30 @@
+[
+    {
+        "name": "small-order A (identity): S·G = R verifies any message",
+        "content": "anything",
+        "keyHex": "0100000000000000000000000000000000000000000000000000000000000000",
+        "sigHex": "00acb4afecf6e8c4559794e51ef80d12d49ee700df9552e9c43fe7cc90840552ed5e000000000000000000000000000000000000000000000000000000000000",
+        "valid": false
+    },
+    {
+        "name": "small-order R (identity)",
+        "content": "hello",
+        "keyHex": "4b378c88becf41fb2a88bb9b9f79a00307fd8a01bf27d2d404cb5d8b9eb9bfb9",
+        "sigHex": "0100000000000000000000000000000000000000000000000000000000000000c7d3a55e18cbd54f02dd15ea107debeb54250ccdd98fb07d6b9a4afbbdddc406",
+        "valid": false
+    },
+    {
+        "name": "mixed-order A, k·T8 != 0: only the cofactored equation accepts",
+        "content": "m0",
+        "keyHex": "4f02af81a266548b73745433575dcb7c7afd7862939b6cba3160b72b3e8918f0",
+        "sigHex": "00acb4afecf6e8c4559794e51ef80d12d49ee700df9552e9c43fe7cc908405524d139641b236d63140bc67431f6172e746b2fce52cb434bf373d67ccf2b2250f",
+        "valid": false
+    },
+    {
+        "name": "mixed-order A, k·T8 == 0: valid under every equation",
+        "content": "m13",
+        "keyHex": "4f02af81a266548b73745433575dcb7c7afd7862939b6cba3160b72b3e8918f0",
+        "sigHex": "00acb4afecf6e8c4559794e51ef80d12d49ee700df9552e9c43fe7cc908405526da26bbcb9068f3ff2bd2143cd4c21628fe528be033ba41d033feeb6f233330e",
+        "valid": true
+    }
+]
