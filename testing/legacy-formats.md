@@ -38,7 +38,7 @@ A developer who doesn't know which version wrote the data tries the functions of
 
 ## Functions
 
-All are Hex variants. The Bytes variants of every old version used the same format, so legacy Bytes variants are optional.
+One export each, the key decides hex or bytes mode like the main API. The Bytes variants of every old version used the same format as the Hex ones.
 
 ### `symmetricDecryptV0_2_0(gibbrishHex, keyHex)`
 `utf8decode(cbc(gibbrish, key48))`
