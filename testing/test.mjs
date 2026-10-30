@@ -105,13 +105,6 @@ test(`key generation shapes`, async () => {
     assert.equal((await m.createSymKeyBytes()).length, 48)
 })
 
-test(`legacy symmetric ciphertext decrypts`, async () => {
-    for (const s of fx.symmetric) {
-        assert.equal(await m.symmetricDecrypt(s.gibbrishHex, symKeyHex), s.content, `${s.build}/${s.variant}`)
-        assert.equal(await m.symmetricDecrypt(hexToBytes(s.gibbrishHex), hexToBytes(symKeyHex)), s.content)
-    }
-})
-
 test(`symmetric roundtrip, randomized`, async () => {
     const keyBytes = hexToBytes(symKeyHex)
     for (const c of fx.contents) {
@@ -160,7 +153,7 @@ test(`symmetric key as subarray view with byteOffset`, async () => {
     const c = fx.contents[2]
     // decrypt with a plain copy: a roundtrip through the same view would hide the bug
     assert.equal(await m.symmetricDecrypt(await m.symmetricEncrypt(c, key), hexToBytes(symKeyHex)), c)
-    assert.equal(await m.symmetricDecrypt(hexToBytes(fx.symmetric[0].gibbrishHex), key), fx.symmetric[0].content)
+    assert.equal(await m.symmetricDecrypt(await m.symmetricEncrypt(c, symKeyHex), key), c)
 })
 
 //############################################################
@@ -183,12 +176,6 @@ test(`v1 padded lengths vary`, async () => {
     const lengths = new Set()
     for (let i = 0; i < 50; i++) lengths.add((await encrypt("a")).length)
     assert.ok(lengths.size > 10, `only ${lengths.size} distinct lengths`)
-})
-
-test(`legacy ciphertext starting with 0x01 falls back to CBC`, async () => {
-    const prefixed = fx.symmetric.filter((s) => s.gibbrishHex.startsWith("01"))
-    assert.ok(prefixed.length > 0)
-    for (const s of prefixed) assert.equal(await m.symmetricDecrypt(s.gibbrishHex, symKeyHex), s.content)
 })
 
 test(`v1 any single bit flip is rejected`, async () => {
@@ -215,6 +202,19 @@ test(`v1 ignores key bytes 0..15`, async () => {
     const otherKey = keyBytes.slice()
     otherKey.fill(0, 0, 16)
     assert.equal(await m.symmetricDecrypt(g, otherKey), fx.contents[2])
+})
+
+// frozen v1 output of v0.4.0 (make-v1-fixtures.mjs): every later version must keep reading it
+test(`v0.4.0 v1 fixture decrypts, with and without context`, async () => {
+    const fx040 = fixture("v0.4.0.json")
+    for (const e of fx040.symmetric) {
+        assert.equal(await m.symmetricDecrypt(e.gibbrishHex, fx040.symKeyHex, e.context), e.content, e.context)
+        assert.equal(await m.symmetricDecrypt(hexToBytes(e.gibbrishHex), hexToBytes(fx040.symKeyHex), e.context), e.content)
+    }
+    for (const e of fx040.asymmetric) {
+        assert.equal(await m.asymmetricDecrypt(e, fx040.bob.secretKeyHex, e.context), e.content, e.context)
+    }
+    await assert.rejects(m.symmetricDecrypt(fx040.symmetric.at(-1).gibbrishHex, fx040.symKeyHex), /Decryption failed/)
 })
 
 //############################################################
@@ -248,8 +248,7 @@ test(`empty context is the same as no context`, async () => {
     assert.equal(await m.symmetricDecrypt(new Uint8Array([0x01, ...nonce, ...sealed]), keyBytes, ""), "hi")
 })
 
-test(`context never unlocks legacy ciphertext, must be a well-formed string`, async () => {
-    await assert.rejects(m.symmetricDecrypt(fx.symmetric[0].gibbrishHex, symKeyHex, "ctx"), /Decryption failed/)
+test(`context must be a well-formed string`, async () => {
     for (const bad of ["a\uD800b", 42, null]) {
         await assert.rejects(m.symmetricEncrypt("x", symKeyHex, bad), TypeError, String(bad))
         await assert.rejects(m.symmetricDecrypt(await m.symmetricEncrypt("x", symKeyHex), symKeyHex, bad), TypeError)
