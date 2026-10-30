@@ -55,6 +55,20 @@ test(`signatures v0.2.0 verify, never throw`, async () => {
     assert.equal(typeof await l.verifySignatureV0_2_0("01" + "00".repeat(63), "01" + "00".repeat(31), "anything"), "string")
 })
 
+test(`hashed DH and elGamal v0.2.0, both sides agree`, async () => {
+    const { alice, bob } = fx020
+    for (const d of fx020.diffieHellman) {
+        assert.equal(await l.diffieHellmanSecretHashV0_2_0(alice.secretKeyHex, bob.publicKeyHex, d.context), d.hashHex)
+        assert.equal(await l.diffieHellmanSecretHashV0_2_0(bob.secretKeyHex, alice.publicKeyHex, d.context), d.hashHex)
+        const hb = await l.diffieHellmanSecretHashV0_2_0(hexToBytes(alice.secretKeyHex), hexToBytes(bob.publicKeyHex), d.context)
+        assert.equal(bytesToHex(hb), d.hashHex)
+    }
+    for (const e of fx020.elGamal.filter((e) => e.kind == "hash")) {
+        assert.equal(await l.diffieHellmanSecretHashV0_2_0(bob.secretKeyHex, e.referencePointHex, e.context), e.sharedSecretHex, `${e.build}/${e.context}`)
+    }
+    await assert.rejects(l.diffieHellmanSecretHashV0_2_0(bob.secretKeyHex, "01" + "00".repeat(31)), RangeError)
+})
+
 test(`DH and elGamal v0.3.1, both sides agree`, async () => {
     const { alice, bob } = fx031
     for (const d of fx031.diffieHellman) {
@@ -99,7 +113,7 @@ test(`a legacy function rejects the other groups' data`, async () => {
 test(`legacy entry point exports exactly the spec'd functions`, () => {
     assert.deepEqual(Object.keys(l).sort(), [
         "asymmetricDecryptV0_0_7", "asymmetricDecryptV0_2_0", "asymmetricDecryptV0_3_1",
-        "diffieHellmanSecretHashV0_3_1", "diffieHellmanSecretRawV0_3_1",
+        "diffieHellmanSecretHashV0_2_0", "diffieHellmanSecretHashV0_3_1", "diffieHellmanSecretRawV0_3_1",
         "symmetricDecryptV0_2_0", "symmetricDecryptV0_3_1", "verifySignatureV0_2_0",
     ])
 })

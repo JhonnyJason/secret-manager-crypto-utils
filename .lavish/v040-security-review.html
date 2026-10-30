@@ -1,0 +1,240 @@
+<!doctype html>
+<html data-theme="luxury" data-lavish-annotate="off" lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v0.4.0 security review</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, li, td, th, .badge) { overflow-wrap: anywhere; }
+  code { font-size: .85em; background: var(--color-base-300); padding: .05em .35em; border-radius: .3em; }
+  pre code { background: none; padding: 0; }
+  .finding:has(select option[value="fix"]:checked) { border-left: 4px solid var(--color-primary); }
+  .finding:has(select option[value="reject"]:checked) { opacity: .55; }
+</style>
+</head>
+<body class="bg-base-100 text-base-content">
+<main class="mx-auto max-w-5xl p-4 lg:p-10 space-y-10">
+
+<header class="space-y-3">
+  <div class="text-sm opacity-60">secret-manager-crypto-utils · v0.4.0 pre-publish review · <code>sources/source/index/index.js</code></div>
+  <h1 class="text-4xl font-bold">What would be attacked, what will confuse</h1>
+  <p class="opacity-80 max-w-3xl">35/35 tests pass. Every item marked <i>confirmed</i> was reproduced against <code>output/index.js</code>.
+  These are the 8 items that matter. The minor ones are collected at the bottom. For each item, pick what to do with it, then queue once at the end.</p>
+  <div class="stats stats-vertical lg:stats-horizontal bg-base-200 w-full">
+    <div class="stat"><div class="stat-title">Attacks</div><div class="stat-value text-error text-3xl">2</div><div class="stat-desc">legacy forgery, torsion leak</div></div>
+    <div class="stat"><div class="stat-title">Design gaps</div><div class="stat-value text-warning text-3xl">3</div><div class="stat-desc">no context binding, PIN claim, sender auth</div></div>
+    <div class="stat"><div class="stat-title">Developer traps</div><div class="stat-value text-3xl">3</div><div class="stat-desc">missing await, Hex naming, hex case</div></div>
+  </div>
+</header>
+
+<form id="review" class="space-y-10" data-lavish-question="v040-security-review" onsubmit="event.preventDefault(); submitReview(this)">
+
+<!-- ============================================================ -->
+<section class="space-y-4">
+  <h2 class="text-2xl font-bold">Attacks</h2>
+
+  <!-- S1 -->
+  <div class="finding card bg-base-200" data-id="S1" data-label="legacy CBC fallback: unauthenticated, forgeable">
+    <div class="card-body space-y-3">
+      <div class="flex flex-wrap gap-2 items-center"><span class="badge badge-error">critical</span><span class="badge badge-soft badge-success">confirmed</span><h3 class="card-title">S1 · Tampered legacy ciphertext decrypts without complaint</h3></div>
+      <p class="text-sm"><code>symmetricDecrypt</code> silently falls back to the legacy AES-CBC format, and that format has no integrity check. <code>unsaltContent</code> only checks the first and last bytes, so its "nobody has tampered" comment is false. I flipped bytes in block 30 of a v0.3.1 fixture:</p>
+      <div class="mockup-code text-xs"><pre data-prefix="$"><code>g[30*16 + i] ^= "x" ^ "PWNED!"[i];  symmetricDecryptBytes(g, key)</code></pre><pre data-prefix="&gt;" class="text-error"><code>"…xxxxx֊G'}\"�\t�2t�q�PWNED!xxxx…"   // no error</code></pre></div>
+      <p class="text-sm"><b>Impact:</b> v1 GCM is only as strong as the weakest format that decrypt accepts. Any legacy ciphertext under a key can be edited (one block gets garbled, the next one is attacker-chosen). This also applies to <code>asymmetricDecrypt</code>. It reopens the auto-detect decision from 2026-10-28, which didn't know about this.</p>
+      <fieldset class="fieldset bg-base-100 rounded-box p-3">
+        <legend class="fieldset-legend">Which way?</legend>
+        <label class="label"><input type="radio" class="radio radio-sm" name="S1-option" value="A" checked> <b>A</b> · Separate <code>symmetricDecryptLegacy</code> / <code>asymmetricDecryptLegacy</code>. Normal decrypt is v1 only. Apps migrate by decrypting legacy and re-encrypting as v1. (recommended)</label>
+        <label class="label"><input type="radio" class="radio radio-sm" name="S1-option" value="B"> <b>B</b> · Opt-in flag: <code>symmetricDecrypt(g, key, { allowLegacy: true })</code>.</label>
+        <label class="label"><input type="radio" class="radio radio-sm" name="S1-option" value="C"> <b>C</b> · Keep auto-detect and document the risk in the README.</label>
+      </fieldset>
+      <p class="text-xs opacity-70">A and B also get rid of S3 (one AES key shared by CBC and GCM) and the fallback coupling in the bit-flip test.</p>
+      <div class="flex flex-wrap gap-2 items-center">
+        <select class="select select-sm w-auto" name="S1"><option value="fix" selected>fix now</option><option value="defer">defer</option><option value="doc">document only</option><option value="reject">reject</option></select>
+        <input class="input input-sm flex-1" name="S1-note" placeholder="note">
+      </div>
+    </div>
+  </div>
+
+  <!-- S2 -->
+  <div class="finding card bg-base-200" data-id="S2" data-label="reject mixed-order (torsion) points: leaks k mod 8">
+    <div class="card-body space-y-3">
+      <div class="flex flex-wrap gap-2 items-center"><span class="badge badge-warning">medium</span><span class="badge badge-soft badge-success">confirmed</span><h3 class="card-title">S2 · Mixed-order points leak 3 bits of the secret scalar</h3></div>
+      <p class="text-sm"><code>publicPoint</code> rejects pure small-order points but accepts <code>B + T8</code>. The scalar is reduced mod L, so the term <code>(k mod 8)·T8</code> survives. An attacker sends <code>referencePoint = A + T8</code> and learns <code>k mod 8</code> by watching which of 8 decryptions succeeds.</p>
+      <div class="mockup-code text-xs"><pre data-prefix="$"><code>diffieHellmanSecretRawHex(bob, alicePub + T8)   // accepted</code></pre><pre data-prefix="&gt;" class="text-error"><code>attacker learns k mod 8 = 4   (actual: 4)</code></pre></div>
+      <p class="text-sm"><b>Fix:</b> one line in <code>publicPoint</code>. Honest keys are torsion-free, so the v0.3.1 fixtures still pass.</p>
+      <div class="mockup-code text-xs"><pre data-prefix="-"><code>if (P.isSmallOrder()) throw …</code></pre><pre data-prefix="+"><code>if (P.isSmallOrder() || !P.isTorsionFree()) throw …</code></pre></div>
+      <div class="flex flex-wrap gap-2 items-center">
+        <select class="select select-sm w-auto" name="S2"><option value="fix" selected>fix now</option><option value="defer">defer</option><option value="doc">document only</option><option value="reject">reject</option></select>
+        <input class="input input-sm flex-1" name="S2-note" placeholder="note">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="space-y-4">
+  <h2 class="text-2xl font-bold">Design gaps</h2>
+
+  <!-- D1 -->
+  <div class="finding card bg-base-200" data-id="D1" data-label="no context/AAD binding: ciphertexts swappable between records">
+    <div class="card-body space-y-3">
+      <div class="flex flex-wrap gap-2 items-center"><span class="badge badge-warning">medium</span><h3 class="card-title">D1 · Ciphertexts can be swapped between records</h3></div>
+      <p class="text-sm">Nothing ties a ciphertext to where it belongs. In a secret manager, user A's token moved into user B's slot (same key) decrypts fine. GCM supports this natively through <code>additionalData</code>.</p>
+      <p class="text-sm"><b>Fix:</b> an optional <code>context</code> string on symmetric and asymmetric encrypt/decrypt, passed as AAD. Leaving it empty behaves exactly as today. It is an additive API change, best done before publishing because it changes the v1 contract.</p>
+      <div class="flex flex-wrap gap-2 items-center">
+        <select class="select select-sm w-auto" name="D1"><option value="fix">fix now</option><option value="defer" selected>defer</option><option value="doc">document only</option><option value="reject">reject</option></select>
+        <input class="input input-sm flex-1" name="D1-note" placeholder="note">
+      </div>
+    </div>
+  </div>
+
+  <!-- D2 -->
+  <div class="finding card bg-base-200" data-id="D2" data-label="KDF: PIN claim, iterations floor/ceiling">
+    <div class="card-body space-y-3">
+      <div class="flex flex-wrap gap-2 items-center"><span class="badge badge-warning">medium</span><span class="badge badge-soft badge-success">confirmed</span><h3 class="card-title">D2 · KDF promises PIN protection; iterations unbounded</h3></div>
+      <ul class="text-sm list-disc pl-5 space-y-1">
+        <li>A 4-digit PIN is 10⁴ × 600k SHA-256 operations, which a GPU brute-forces offline in seconds. The comment and README saying "passwords, PINs" mislead.</li>
+        <li><code>iterations = 1</code> is accepted. If <code>{saltHex, iterations}</code> is stored where an attacker can write, they can force a downgrade, or a denial of service with 10⁹.</li>
+      </ul>
+      <p class="text-sm"><b>Fix:</b> remove "PINs" from the docs and enforce, for example, <code>100k ≤ iterations ≤ 10M</code>.</p>
+      <div class="flex flex-wrap gap-2 items-center">
+        <select class="select select-sm w-auto" name="D2"><option value="fix" selected>fix now</option><option value="defer">defer</option><option value="doc">document only</option><option value="reject">reject</option></select>
+        <input class="input input-sm flex-1" name="D2-note" placeholder="note">
+      </div>
+    </div>
+  </div>
+
+  <!-- D3 -->
+  <div class="finding card bg-base-200" data-id="D3" data-label="no sender auth / no signature domain separation: document">
+    <div class="card-body space-y-3">
+      <div class="flex flex-wrap gap-2 items-center"><span class="badge badge-info">low</span><h3 class="card-title">D3 · What decrypt and verify do <i>not</i> prove</h3></div>
+      <ul class="text-sm list-disc pl-5 space-y-1">
+        <li><code>asymmetricDecrypt</code> succeeding only means that <i>someone</i> encrypted to Bob. Developers will read it as "Alice sent this."</li>
+        <li>Signatures carry no context, so a signature over <code>"true"</code> in protocol X is also valid in protocol Y.</li>
+        <li><code>diffieHellmanSecretHash</code> defaults to an empty context, so every use case gets the same key.</li>
+      </ul>
+      <p class="text-sm"><b>Proposal:</b> a README section called "What this does not guarantee". No code change.</p>
+      <div class="flex flex-wrap gap-2 items-center">
+        <select class="select select-sm w-auto" name="D3"><option value="fix">fix now</option><option value="defer">defer</option><option value="doc" selected>document only</option><option value="reject">reject</option></select>
+        <input class="input input-sm flex-1" name="D3-note" placeholder="note">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="space-y-4">
+  <h2 class="text-2xl font-bold">Developer traps</h2>
+
+  <!-- T1 -->
+  <div class="finding card bg-base-200" data-id="T1" data-label="missing await: verify() Promise is truthy">
+    <div class="card-body space-y-3">
+      <div class="flex flex-wrap gap-2 items-center"><span class="badge badge-error">high</span><span class="badge badge-soft badge-success">confirmed</span><h3 class="card-title">T1 · Forgetting <code>await</code> makes every signature valid</h3></div>
+      <div class="mockup-code text-xs"><pre data-prefix="$"><code>if (verify(garbageSig, key, msg)) grantAccess()</code></pre><pre data-prefix="&gt;" class="text-error"><code>Promise is truthy → access granted</code></pre></div>
+      <p class="text-sm">This is the most likely real-world failure. <code>createSymKey*</code> is the only sync function, which teaches developers that some calls don't need <code>await</code>.</p>
+      <p class="text-sm"><b>Fix:</b> make <code>createSymKey*</code> async so every function is async, and put a bold README warning plus the <code>@typescript-eslint/no-floating-promises</code> hint.</p>
+      <div class="flex flex-wrap gap-2 items-center">
+        <select class="select select-sm w-auto" name="T1"><option value="fix" selected>fix now</option><option value="defer">defer</option><option value="doc">document only</option><option value="reject">reject</option></select>
+        <input class="input input-sm flex-1" name="T1-note" placeholder="note">
+      </div>
+    </div>
+  </div>
+
+  <!-- T2 -->
+  <div class="finding card bg-base-200" data-id="T2" data-label="Hex/Bytes suffix means three things; arg order sign vs verify">
+    <div class="card-body space-y-3">
+      <div class="flex flex-wrap gap-2 items-center"><span class="badge badge-warning">medium</span><span class="badge badge-soft badge-success">confirmed</span><h3 class="card-title">T2 · The <code>Hex</code>/<code>Bytes</code> suffix means three things</h3></div>
+      <div class="overflow-x-auto"><table class="table table-sm">
+        <thead><tr><th>Function</th><th>Suffix refers to</th><th>Trap</th></tr></thead>
+        <tbody>
+          <tr><td><code>symmetricEncryptHex</code></td><td>key + ciphertext</td><td>none</td></tr>
+          <tr><td><code>sha256Hex("abcd")</code></td><td>output</td><td>hashes the text, not the bytes <code>0xabcd</code></td></tr>
+          <tr><td><code>symmetricEncryptBytes</code>, <code>createSignatureBytes</code></td><td>key only</td><td>content must still be a string, bytes are rejected</td></tr>
+          <tr><td><code>createSignature(content, key)</code> / <code>verify(sig, key, content)</code></td><td>n/a</td><td>content is first in one, last in the other</td></tr>
+        </tbody>
+      </table></div>
+      <p class="text-sm"><b>Proposal:</b> renaming is out of scope (aliases need to keep working). Document the convention in one table in the README and the <code>.d.ts</code>.</p>
+      <div class="flex flex-wrap gap-2 items-center">
+        <select class="select select-sm w-auto" name="T2"><option value="fix">fix now</option><option value="defer">defer</option><option value="doc" selected>document only</option><option value="reject">reject</option></select>
+        <input class="input input-sm flex-1" name="T2-note" placeholder="note">
+      </div>
+    </div>
+  </div>
+
+  <!-- T3 -->
+  <div class="finding card bg-base-200" data-id="T3" data-label="uppercase hex: one key, many string identities">
+    <div class="card-body space-y-3">
+      <div class="flex flex-wrap gap-2 items-center"><span class="badge badge-warning">medium</span><span class="badge badge-soft badge-success">confirmed</span><h3 class="card-title">T3 · One public key, many string identities</h3></div>
+      <p class="text-sm"><code>"D49E…"</code> and <code>"d49e…"</code> verify the same signatures but compare as different strings. Apps that use <code>publicKeyHex</code> as an identity (allowlists, user lookup) can be tricked into creating duplicates or missing an entry when checking.</p>
+      <ul class="text-sm list-disc pl-5 space-y-1">
+        <li><b>a)</b> Accept lowercase only and reject uppercase. That is strict, and possibly breaks callers who pass uppercase today.</li>
+        <li><b>b)</b> Keep accepting both and document "compare keys lowercased or as bytes". All outputs are already lowercase.</li>
+      </ul>
+      <div class="flex flex-wrap gap-2 items-center">
+        <select class="select select-sm w-auto" name="T3"><option value="fix">fix now (a: lowercase only)</option><option value="defer">defer</option><option value="doc" selected>document only (b)</option><option value="reject">reject</option></select>
+        <input class="input input-sm flex-1" name="T3-note" placeholder="note">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="space-y-4">
+  <h2 class="text-2xl font-bold">Tests to add</h2>
+  <div class="card bg-base-200"><div class="card-body space-y-2 text-sm">
+    <label class="label"><input type="checkbox" class="checkbox checkbox-sm" name="tests" value="X1" checked> X1 · mixed-order points (<code>B + T8</code>) rejected everywhere (S2)</label>
+    <label class="label"><input type="checkbox" class="checkbox checkbox-sm" name="tests" value="X2" checked> X2 · tampered legacy ciphertext rejected by normal decrypt (S1)</label>
+    <label class="label"><input type="checkbox" class="checkbox checkbox-sm" name="tests" value="X3" checked> X3 · freeze a v1 fixture before publishing (format contract across runtimes)</label>
+    <label class="label"><input type="checkbox" class="checkbox checkbox-sm" name="tests" value="X4" checked> X4 · referencePoint bit-flip test: add an error matcher (<code>test.mjs:307</code> accepts any error)</label>
+    <label class="label"><input type="checkbox" class="checkbox checkbox-sm" name="tests" value="X5"> X5 · decrypt with a non-Uint8Array key throws TypeError instead of "Decryption failed"</label>
+  </div></div>
+</section>
+
+<section class="space-y-3">
+  <details class="collapse collapse-arrow bg-base-200">
+    <summary class="collapse-title font-semibold">Minor, no decision needed (FYI)</summary>
+    <div class="collapse-content text-sm space-y-1">
+      <p>• <b>S3</b> One AES key is used for both CBC and GCM, and the legacy IV is fixed at key[0..16]. This goes away with S1 A or B.</p>
+      <p>• Random padding only hides lengths up to 255 bytes. Mention it in the README.</p>
+      <p>• The catch-all in decrypt hides programming errors (wrong types become "Decryption failed!"). See X5.</p>
+      <p>• There are 30 aliases, each one more name to audit. Kept for compatibility.</p>
+      <p>• The signing key is also used for DH and encryption. That is defensible, but should be a documented choice.</p>
+      <p>• The tests import <code>output/</code>, so a stale build tests old code.</p>
+      <p>• Checked and fine: noble rejects non-canonical encodings, enforces lengths, verify is strict RFC 8032, hex validation, no error oracle on the GCM path.</p>
+    </div>
+  </details>
+</section>
+
+<section class="space-y-3">
+  <textarea class="textarea w-full" name="general" rows="3" placeholder="General notes / anything I missed"></textarea>
+  <button type="submit" class="btn btn-primary">Queue review decisions</button>
+</section>
+
+</form>
+</main>
+
+<script>
+const form = document.getElementById("review")
+function collect() {
+  const fd = new FormData(form)
+  const items = [...form.querySelectorAll(".finding")].map((el) => {
+    const id = el.dataset.id
+    const item = { id, label: el.dataset.label, disposition: fd.get(id), note: fd.get(id + "-note") || "" }
+    if (id == "S1") item.option = fd.get("S1-option")
+    return item
+  })
+  return { items, tests: fd.getAll("tests"), general: fd.get("general") || "" }
+}
+function submitReview() {
+  const { items, tests, general } = collect()
+  const lines = items.map((i) => `${i.id} [${i.disposition}${i.option ? ", option " + i.option : ""}] ${i.label}${i.note ? " (note: " + i.note + ")" : ""}`)
+  const text = `v0.4.0 security review decisions. Apply every item by its disposition and give an item-by-item receipt (account for every ID).\n${lines.join("\n")}\nTests to add: ${tests.join(", ") || "none"}${general ? "\nGeneral: " + general : ""}`
+  window.lavish?.queuePrompt(text, { tag: "tracked-batch", text: `Security review: ${items.length} items, ${tests.length} tests`, element: form, queueKey: "v040-security-review", data: { items, tests, general } })
+}
+</script>
+</body>
+</html>

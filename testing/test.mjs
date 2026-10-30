@@ -2,11 +2,10 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import fs from "node:fs"
-import { pbkdf2Sync } from "node:crypto"
 
 const fixture = (name) => JSON.parse(fs.readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8"))
 const fx = fixture("v0.3.1.json")
-// v0.2.0 DH = X25519, the same as main again
+// v0.2.0 raw DH = X25519, the same as main again - the hash binds the public keys since v0.4.0
 const fx020 = fixture("v0.2.0.json")
 // fallback.test.mjs sets a suffix to get a module instance without native Ed25519/X25519
 const m = await import("../output/index.js" + (globalThis.moduleSuffix ?? ""))
@@ -124,25 +123,42 @@ test(`asymmetric roundtrip`, async () => {
     }
 })
 
-test(`diffie-hellman matches v0.2.0, both sides agree`, async () => {
+test(`raw diffie-hellman matches v0.2.0, both sides agree - the hash differs`, async () => {
     const { alice, bob } = fx020
     for (const d of fx020.diffieHellman) {
-        assert.equal(await m.diffieHellmanSecretHash(alice.secretKeyHex, bob.publicKeyHex, d.context), d.hashHex)
-        assert.equal(await m.diffieHellmanSecretHash(bob.secretKeyHex, alice.publicKeyHex, d.context), d.hashHex)
+        assert.equal(await m.diffieHellmanSecretRaw(alice.secretKeyHex, bob.publicKeyHex), d.rawHex)
         assert.equal(await m.diffieHellmanSecretRaw(bob.secretKeyHex, alice.publicKeyHex), d.rawHex)
-        const hb = await m.diffieHellmanSecretHash(hexToBytes(alice.secretKeyHex), hexToBytes(bob.publicKeyHex), d.context)
-        assert.equal(bytesToHex(hb), d.hashHex)
+        assert.equal(bytesToHex(await m.diffieHellmanSecretRaw(hexToBytes(alice.secretKeyHex), hexToBytes(bob.publicKeyHex))), d.rawHex)
+        const h = await m.diffieHellmanSecretHash(alice.secretKeyHex, bob.publicKeyHex, d.context)
+        assert.equal(await m.diffieHellmanSecretHash(bob.secretKeyHex, alice.publicKeyHex, d.context), h)
+        assert.notEqual(h, d.hashHex)
     }
 })
 
-test(`v0.2.0 elGamal secrets are recoverable by the receiver`, async () => {
+test(`v0.2.0 raw elGamal secrets are recoverable by the receiver`, async () => {
     const { bob } = fx020
-    for (const e of fx020.elGamal) {
-        const recovered = e.kind == "hash"
-            ? await m.diffieHellmanSecretHash(bob.secretKeyHex, e.referencePointHex, e.context)
-            : await m.diffieHellmanSecretRaw(bob.secretKeyHex, e.referencePointHex)
-        assert.equal(recovered, e.sharedSecretHex, `${e.build}/${e.kind}/${e.context}`)
+    for (const e of fx020.elGamal.filter((e) => e.kind == "raw")) {
+        assert.equal(await m.diffieHellmanSecretRaw(bob.secretKeyHex, e.referencePointHex), e.sharedSecretHex, `${e.build}/${e.context}`)
     }
+})
+
+// sha512(shared ‖ lower publicKey ‖ higher publicKey ‖ utf8(context))
+test(`hashed secrets bind both public keys as transmitted`, async () => {
+    const raw = await m.diffieHellmanSecretRaw(alice.secretKeyHex, bob.publicKeyHex)
+    const [lo, hi] = [alice.publicKeyHex, bob.publicKeyHex].sort()
+    const expected = await m.sha512(hexToBytes(raw + lo + hi + bytesToHex(new TextEncoder().encode("ctx"))))
+    assert.equal(await m.diffieHellmanSecretHash(alice.secretKeyHex, bob.publicKeyHex, "ctx"), expected)
+    assert.equal(await m.diffieHellmanSecretHash(bob.secretKeyHex, alice.publicKeyHex, "ctx"), expected)
+    // -B: the same X25519 secret, another hash
+    const minusBob = bob.publicKeyHex.slice(0, 62) + (parseInt(bob.publicKeyHex.slice(62), 16) ^ 0x80).toString(16).padStart(2, "0")
+    assert.equal(await m.diffieHellmanSecretRaw(alice.secretKeyHex, minusBob), raw)
+    assert.notEqual(await m.diffieHellmanSecretHash(alice.secretKeyHex, minusBob, "ctx"), expected)
+    // elGamal: the receiver gets the same hash from the referencePoint
+    const e = await m.elGamalSecretHash(bob.publicKeyHex, "ctx")
+    const eRaw = await m.diffieHellmanSecretRaw(bob.secretKeyHex, e.referencePointHex)
+    const [elo, ehi] = [e.referencePointHex, bob.publicKeyHex].sort()
+    assert.equal(e.sharedSecretHex, await m.sha512(hexToBytes(eRaw + elo + ehi + bytesToHex(new TextEncoder().encode("ctx")))))
+    assert.equal(await m.diffieHellmanSecretHash(bob.secretKeyHex, e.referencePointHex, "ctx"), e.sharedSecretHex)
 })
 
 // v0.3.1 bug: Bytes variants ignored byteOffset (handoff)
@@ -259,7 +275,8 @@ test(`context must be a well-formed string`, async () => {
 // KDF: PBKDF2-SHA256, 48 bytes
 test(`KDF matches PBKDF2-SHA256 known answer`, async () => {
     const saltHex = "00112233445566778899aabbccddeeff"
-    const expected = pbkdf2Sync("correct horse", Buffer.from(saltHex, "hex"), 1000, 48, "sha256").toString("hex")
+    // = pbkdf2Sync("correct horse", salt, 1000, 48, "sha256") in node and python hashlib
+    const expected = "4c5805526868c915a4cba43d75ec6b0a07152bb7b9ca30501c96ea0f9188682988bd36490462762c07fbd8f4263bc49f"
     assert.deepEqual(await m.deriveSymKeyFromPassword("correct horse", saltHex, 1000), { keyHex: expected, saltHex, iterations: 1000 })
 })
 
@@ -368,11 +385,12 @@ test(`small-order public keys are rejected`, async () => {
 const bobPlusT8 = "f7f44d8ed83ce9887a1aa98973af07aeb60b94727755a55b03c5254382422952"
 
 // X25519 clamping makes the scalar a multiple of 8: the torsion component drops out, nothing about k mod 8 leaks
-test(`a torsion component of a public key has no effect`, async () => {
+// the hashed secrets bind the key as transmitted, so B + T8 gives another hash than bob's own key
+test(`a torsion component of a public key has no effect on the raw secret`, async () => {
     assert.equal(await m.diffieHellmanSecretRaw(alice.secretKeyHex, bobPlusT8), await m.diffieHellmanSecretRaw(alice.secretKeyHex, bob.publicKeyHex))
-    assert.equal(await m.diffieHellmanSecretHash(alice.secretKeyHex, bobPlusT8, "ctx"), await m.diffieHellmanSecretHash(alice.secretKeyHex, bob.publicKeyHex, "ctx"))
+    assert.notEqual(await m.diffieHellmanSecretHash(alice.secretKeyHex, bobPlusT8, "ctx"), await m.diffieHellmanSecretHash(alice.secretKeyHex, bob.publicKeyHex, "ctx"))
     const e = await m.elGamalSecretHash(bobPlusT8, "ctx")
-    assert.equal(await m.diffieHellmanSecretHash(bob.secretKeyHex, e.referencePointHex, "ctx"), e.sharedSecretHex)
+    assert.notEqual(await m.diffieHellmanSecretHash(bob.secretKeyHex, e.referencePointHex, "ctx"), e.sharedSecretHex)
     assert.equal(await m.asymmetricDecrypt(await m.asymmetricEncrypt("x", bobPlusT8), bob.secretKeyHex), "x")
 })
 

@@ -4,6 +4,7 @@
   - `node --test testing/`
   - `bun test ./testing/test.mjs ./testing/fallback.test.mjs ./testing/legacy.test.mjs`
   - `deno test -A --no-check testing/test.mjs testing/fallback.test.mjs testing/legacy.test.mjs`
+  - browsers: `node testing/browser.mjs <file> [chromium|google-chrome-stable|firefox|webkit ...]` runs one test file in every installed browser, headless (WebKit = WebKitGTK MiniBrowser under `xvfb-run`). `browser.html` + `browser-shims.mjs` stand in for node:test/assert/fs/Buffer. Run it for `legacy.test.mjs`, `test.mjs` and `fallback.test.mjs`.
 - `fixtures/ed25519-edge.json` (from `make-ed25519-edge-vectors.mjs`): signatures on which raw native Ed25519 (node/bun/deno) and noble disagree - small-order A, small-order R, cofactored-only. Same categories as ed25519-speccheck, but with string messages.
 - `fixtures/v0.3.1.json` was produced by the **published** 0.3.1 (node and browser builds) via `make-fixtures.mjs`. Never regenerate it from local code: it is the compatibility contract that old ciphertext keeps decrypting.
 - `fixtures/v0.4.0.json` (from `make-v1-fixtures.mjs`, once, from the final 0.4.0 build): v1 symmetric and asymmetric, with and without context. The v1 contract - never regenerate it, the script refuses to overwrite.
