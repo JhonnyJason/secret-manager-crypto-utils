@@ -117,3 +117,45 @@ test(`legacy entry point exports exactly the spec'd functions`, () => {
         "symmetricDecryptV0_2_0", "symmetricDecryptV0_3_1", "verifySignatureV0_2_0",
     ])
 })
+
+// no equalizing in legacy: noble's Error for a point not on the curve, RangeError for non-canonical and small-order
+test(`legacy functions reject invalid points and incomplete secrets`, async () => {
+    const { bob } = fx031
+    const e = fx031.asymmetric[0]
+    for (const p of ["02" + "00".repeat(31), "ed" + "ff".repeat(30) + "7f", "01" + "00".repeat(31), "00".repeat(31)]) {
+        await assert.rejects(l.diffieHellmanSecretRawV0_3_1(bob.secretKeyHex, p), Error, p)
+        await assert.rejects(l.diffieHellmanSecretHashV0_3_1(bob.secretKeyHex, p), Error, p)
+        await assert.rejects(l.diffieHellmanSecretHashV0_2_0(bob.secretKeyHex, p), Error, p)
+        for (const read of [l.asymmetricDecryptV0_0_7, l.asymmetricDecryptV0_2_0, l.asymmetricDecryptV0_3_1]) {
+            await assert.rejects(read({ referencePointHex: p, encryptedContentHex: e.encryptedContentHex }, bob.secretKeyHex), Error, `${read.name} ${p}`)
+        }
+    }
+    for (const read of [l.asymmetricDecryptV0_0_7, l.asymmetricDecryptV0_2_0, l.asymmetricDecryptV0_3_1]) {
+        for (const bad of [{}, { referencePointHex: e.referencePointHex }, { encryptedContentHex: e.encryptedContentHex }]) {
+            await assert.rejects(read(bad, bob.secretKeyHex), /Invalid secrets Object/, read.name)
+        }
+        await assert.rejects(read(null, bob.secretKeyHex), TypeError, read.name)
+    }
+})
+
+test(`every legacy rejection is an Error`, async () => {
+    const bad = [undefined, null, 42, "", "zz", {}, new Uint8Array(0), new Uint8Array(64), "a\uD800"]
+    for (const [name, fn] of Object.entries(l)) {
+        for (const x of bad) await fn(x, x, x).then(() => {}, (e) => assert.ok(e instanceof Error, `${name}(${String(x)}): ${e}`))
+    }
+})
+
+// lenient: any byte flavor reads old data, copied to plain memory before WebCrypto sees it
+test(`legacy functions take any byte flavor`, async () => {
+    const e = fx031.symmetric[2]
+    const copyInto = (buffer, b) => { new Uint8Array(buffer).set(b); return buffer }
+    const flavors = {
+        arrayBuffer: (b) => b.slice().buffer,
+        dataView: (b) => new DataView(b.slice().buffer),
+        resizable: (b) => new Uint8Array(copyInto(new ArrayBuffer(b.length, { maxByteLength: 1024 }), b)),
+    }
+    if (typeof SharedArrayBuffer == "function") flavors.shared = (b) => new Uint8Array(copyInto(new SharedArrayBuffer(b.length), b))
+    for (const [name, f] of Object.entries(flavors)) {
+        assert.equal(await l.symmetricDecryptV0_3_1(f(hexToBytes(e.gibbrishHex)), f(hexToBytes(fx031.symKeyHex))), e.content, name)
+    }
+})

@@ -9,6 +9,8 @@ const fx = fixture("v0.3.1.json")
 const fx020 = fixture("v0.2.0.json")
 // fallback.test.mjs sets a suffix to get a module instance without native Ed25519/X25519
 const m = await import("../output/index.js" + (globalThis.moduleSuffix ?? ""))
+// pure JS reference for signatures, independent of native Ed25519
+const ed = await import("../output/node_modules/@noble/ed25519/index.js")
 const hexToBytes = (h) => new Uint8Array(Buffer.from(h, "hex"))
 const bytesToHex = (b) => Buffer.from(b).toString("hex")
 const { alice, bob, symKeyHex } = fx
@@ -172,6 +174,54 @@ test(`symmetric key as subarray view with byteOffset`, async () => {
     assert.equal(await m.symmetricDecrypt(await m.symmetricEncrypt(c, symKeyHex), key), c)
 })
 
+// WebCrypto rejected shared buffers everywhere and resizable ones on bun, and the fallback's verify reversed a Buffer signature in place
+test(`Uint8Array flavors: plain memory gives the same result and is never changed, other memory is a TypeError`, async () => {
+    const copyInto = (buffer, b) => { const v = new Uint8Array(buffer); v.set(b); return v }
+    const flavors = {
+        offset: (b) => { const v = new Uint8Array(b.length + 3); v.set(b, 3); return v.subarray(3) },
+    }
+    if (globalThis.Buffer?.from) flavors.buffer = (b) => Buffer.from(b)
+    const rejected = {
+        resizable: (b) => copyInto(new ArrayBuffer(b.length, { maxByteLength: 1024 }), b),
+    }
+    // browsers have SharedArrayBuffer only when cross-origin isolated
+    if (typeof SharedArrayBuffer == "function") rejected.shared = (b) => copyInto(new SharedArrayBuffer(b.length), b)
+    if (ArrayBuffer.prototype.transfer) rejected.detached = (b) => { const v = new Uint8Array(b); v.buffer.transfer(); return v }
+    const sk = hexToBytes(alice.secretKeyHex), pk = hexToBytes(bob.publicKeyHex), sym = hexToBytes(symKeyHex)
+    const sig = await m.createSignature("c", sk), gib = await m.symmetricEncrypt("c", sym)
+    const s = await m.asymmetricEncrypt("c", hexToBytes(alice.publicKeyHex))
+    // each call takes one argument per position: plain, then each flavor
+    const calls = [
+        (f) => m.sha256Bytes(f(sym)),
+        (f) => m.createPublicKey(f(sk)),
+        (f) => m.createSignature("c", f(sk)),
+        (f) => m.verifySignature(f(sig), f(hexToBytes(alice.publicKeyHex)), "c"),
+        (f) => m.symmetricDecrypt(f(gib), f(sym)),
+        (f) => m.symmetricEncrypt("c", f(sym)).then((g) => m.symmetricDecrypt(g, sym)),
+        (f) => m.asymmetricDecrypt({ referencePointBytes: f(s.referencePointBytes), encryptedContentBytes: f(s.encryptedContentBytes) }, f(hexToBytes(alice.secretKeyHex))),
+        (f) => m.asymmetricEncrypt("c", f(pk)).then((r) => r.referencePointBytes.length),
+        (f) => m.diffieHellmanSecretRaw(f(sk), f(pk)),
+        (f) => m.diffieHellmanSecretHash(f(sk), f(pk), "ctx"),
+        (f) => m.elGamalSecretHash(f(pk), "ctx").then((r) => r.sharedSecretBytes.length),
+    ]
+    for (const [i, call] of calls.entries()) {
+        const expected = await call((b) => b)
+        for (const [name, flavor] of Object.entries(flavors)) {
+            const inputs = []
+            const f = (b) => { const v = flavor(b); inputs.push([v, bytesToHex(v)]); return v }
+            assert.deepEqual(await call(f), expected, `call ${i}, ${name}`)
+            for (const [v, before] of inputs) assert.equal(bytesToHex(v), before, `call ${i}, ${name}: input changed`)
+        }
+        for (const [name, flavor] of Object.entries(rejected)) {
+            // verifySignature never throws, it answers
+            if (i == 3) assert.equal(await call(flavor), "Malformed input!", name)
+            else await assert.rejects(call(flavor), TypeError, `call ${i}, ${name}`)
+        }
+    }
+    // only Uint8Array: the shas took ArrayBuffer and DataView before
+    for (const bad of [sym.buffer, new DataView(sym.buffer), new Uint8ClampedArray(sym)]) await assert.rejects(m.sha256(bad), TypeError)
+})
+
 //############################################################
 // format v1: 0x01 ‖ nonce(12) ‖ GCM( padLen(1) ‖ content ‖ random(padLen) ) ‖ tag(16)
 const keyBytes = hexToBytes(symKeyHex)
@@ -278,6 +328,8 @@ test(`KDF matches PBKDF2-SHA256 known answer`, async () => {
     // = pbkdf2Sync("correct horse", salt, 1000, 48, "sha256") in node and python hashlib
     const expected = "4c5805526868c915a4cba43d75ec6b0a07152bb7b9ca30501c96ea0f9188682988bd36490462762c07fbd8f4263bc49f"
     assert.deepEqual(await m.deriveSymKeyFromPassword("correct horse", saltHex, 1000), { keyHex: expected, saltHex, iterations: 1000 })
+    // hex output is always lowercase, also the salt we were given
+    assert.deepEqual(await m.deriveSymKeyFromPassword("correct horse", saltHex.toUpperCase(), 1000), { keyHex: expected, saltHex, iterations: 1000 })
 })
 
 test(`KDF defaults: random 16 byte salt, 600000 iterations, key works`, async () => {
@@ -327,11 +379,13 @@ test(`symmetric decrypt rejects non-Uint8Array input with TypeError`, async () =
 test(`ed25519 lengths are enforced`, async () => {
     await assert.rejects(m.createSignature("c", new Uint8Array(31)), RangeError)
     await assert.rejects(m.diffieHellmanSecretRaw(new Uint8Array(33), hexToBytes(bob.publicKeyHex)), RangeError)
+    for (const len of [0, 31, 33]) await assert.rejects(m.createPublicKey(new Uint8Array(len)), RangeError, `len ${len}`)
 })
 
 test(`KDF rejects bad iterations and salt`, async () => {
     for (const it of [0, -1, 1.5, "1000", 999, 10000001]) await assert.rejects(m.deriveSymKeyFromPassword("pw", "00".repeat(16), it), RangeError, String(it))
     await assert.rejects(m.deriveSymKeyFromPassword("pw", "xyz", 1000), SyntaxError)
+    for (const salt of [null, 42, new Uint8Array(16)]) await assert.rejects(m.deriveSymKeyFromPassword("pw", salt, 1000), TypeError, String(salt))
 })
 
 test(`asymmetric v1 tamper is rejected`, async () => {
@@ -381,6 +435,20 @@ test(`small-order public keys are rejected`, async () => {
     }
 })
 
+// y = 2 is not on the curve, y = p is non-canonical, 31 bytes is the wrong length: RangeError, not noble's plain Error
+test(`invalid public keys and reference points are a RangeError`, async () => {
+    const s = await m.asymmetricEncrypt("x", bob.publicKeyHex)
+    for (const p of ["02" + "00".repeat(31), "ed" + "ff".repeat(30) + "7f", "00".repeat(31)]) {
+        await assert.rejects(m.diffieHellmanSecretRaw(bob.secretKeyHex, p), RangeError, p)
+        await assert.rejects(m.diffieHellmanSecretHash(bob.secretKeyHex, p, "ctx"), RangeError, p)
+        await assert.rejects(m.elGamalSecretRaw(p), RangeError, p)
+        await assert.rejects(m.elGamalSecretHash(p, "ctx"), RangeError, p)
+        await assert.rejects(m.asymmetricEncrypt("x", p), RangeError, p)
+        await assert.rejects(m.asymmetricDecrypt({ ...s, referencePointHex: p }, bob.secretKeyHex), RangeError, p)
+    }
+    for (const p of [null, 42, [1, 2]]) await assert.rejects(m.elGamalSecretRaw(p), TypeError, String(p))
+})
+
 // bob's public key + the order-8 point: not small-order, but not torsion-free either
 const bobPlusT8 = "f7f44d8ed83ce9887a1aa98973af07aeb60b94727755a55b03c5254382422952"
 
@@ -421,6 +489,22 @@ test(`non-ASCII and large content roundtrip`, async () => {
     }
 })
 
+// WebKitGTK's native Ed25519 broke from about 65000 bytes - WebKit takes noble from 32 KiB, native must be right below at every size
+test(`signatures of every size match noble, verify, and reject a flipped bit`, async () => {
+    const sizes = new Set([0, 32767, 32768, 40000, 65000, 65535, 65536, 100000])
+    for (let p = 1; p <= 65536; p *= 2) [p - 1, p, p + 1].forEach((n) => sizes.add(n))
+    for (let n = 0; n < 32768; n += 1021) sizes.add(n)
+    const sk = hexToBytes(alice.secretKeyHex)
+    for (const n of [...sizes].sort((a, b) => a - b)) {
+        const c = "a".repeat(n)
+        const sig = await m.createSignature(c, alice.secretKeyHex)
+        assert.equal(sig, bytesToHex(await ed.signAsync(new TextEncoder().encode(c), sk)), `size ${n}`)
+        assert.equal(await m.verifySignature(sig, alice.publicKeyHex, c), undefined, `size ${n}`)
+        const bad = (parseInt(sig[0], 16) ^ 1).toString(16) + sig.slice(1)
+        assert.equal(await m.verifySignature(bad, alice.publicKeyHex, c), "Invalid signature!", `size ${n} flipped`)
+    }
+})
+
 test(`lone surrogates are rejected`, async () => {
     for (const bad of ["a\uD800b", "\uDC00", "x\uD83D"]) {
         await assert.rejects(m.symmetricEncrypt(bad, symKeyHex), TypeError)
@@ -444,7 +528,7 @@ test(`asymmetric referencePoint bit flips are rejected`, async () => {
         referencePointBytes[bit >> 3] ^= 1 << (bit & 7)
         // not on the curve, small-order, or a valid point giving the wrong key
         // bit 255 is the sign of x: -A gives the same X25519 secret, only sha512(shared ‖ A) makes the key differ
-        await assert.rejects(m.asymmetricDecrypt({ ...s, referencePointBytes }, hexToBytes(bob.secretKeyHex)), /bad point|Invalid public key|Decryption failed/, `bit ${bit}`)
+        await assert.rejects(m.asymmetricDecrypt({ ...s, referencePointBytes }, hexToBytes(bob.secretKeyHex)), /Invalid public key|Decryption failed/, `bit ${bit}`)
     }
 })
 
@@ -477,4 +561,20 @@ test(`every function rejects invalid hex`, async () => {
         () => m.deriveSymKeyFromPassword("pw", bad, 1000),
     ]
     for (const [i, call] of calls.entries()) await assert.rejects(async () => call(), SyntaxError, `call ${i}`)
+})
+
+test(`asymmetricDecrypt rejects secrets without referencePoint or encryptedContent`, async () => {
+    const s = await m.asymmetricEncrypt("c", bob.publicKeyHex)
+    for (const bad of [{}, 42, "str", { referencePointHex: s.referencePointHex }, { encryptedContentHex: s.encryptedContentHex }]) {
+        await assert.rejects(m.asymmetricDecrypt(bad, bob.secretKeyHex), /Invalid secrets Object/, JSON.stringify(bad))
+    }
+    for (const bad of [null, undefined]) await assert.rejects(m.asymmetricDecrypt(bad, bob.secretKeyHex), TypeError, String(bad))
+})
+
+// the one guarantee about errors: whatever fails rejects with an Error, never with something else
+test(`every rejection is an Error`, async () => {
+    const bad = [undefined, null, 42, "", "zz", {}, new Uint8Array(0), new Uint8Array(64), "a\uD800"]
+    for (const [name, fn] of Object.entries(m)) {
+        for (const x of bad) await fn(x, x, x).then(() => {}, (e) => assert.ok(e instanceof Error, `${name}(${String(x)}): ${e}`))
+    }
 })

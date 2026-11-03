@@ -12,8 +12,8 @@ const file = process.argv[2] ?? "legacy.test.mjs"
 const wanted = process.argv.slice(3)
 const types = { ".html": "text/html", ".mjs": "text/javascript", ".js": "text/javascript", ".json": "application/json" }
 const launchers = {
-    chromium: (url, dir) => ["chromium", ["--headless=new", "--no-first-run", `--user-data-dir=${dir}`, url]],
-    "google-chrome-stable": (url, dir) => ["google-chrome-stable", ["--headless=new", "--no-first-run", `--user-data-dir=${dir}`, url]],
+    chromium: (url, dir) => ["chromium", ["--headless=new", "--no-first-run", "--password-store=basic", `--user-data-dir=${dir}`, url]],
+    "google-chrome-stable": (url, dir) => ["google-chrome-stable", ["--headless=new", "--no-first-run", "--password-store=basic", `--user-data-dir=${dir}`, url]],
     firefox: (url, dir) => ["firefox", ["--headless", "--no-remote", "--profile", dir, url]],
     // WebKit = Safari's engine; MiniBrowser has no headless mode, so it gets a virtual X display
     webkit: (url) => ["xvfb-run", ["-a", "/usr/lib/webkitgtk-6.0/MiniBrowser", "--private", url]],

@@ -1,7 +1,7 @@
 # testing
 
 - `test.mjs` tests `output/index.js`, `legacy.test.mjs` tests `output/legacy.js` against the v0.2.0/v0.3.1 fixtures. `fallback.test.mjs` runs it again with native Ed25519/X25519 hidden, so the noble fallback passes the same tests. Same files on every runtime:
-  - `node --test testing/`
+  - `node --test testing/` (node < 23: `node --test testing/test.mjs testing/*.test.mjs`)
   - `bun test ./testing/test.mjs ./testing/fallback.test.mjs ./testing/legacy.test.mjs`
   - `deno test -A --no-check testing/test.mjs testing/fallback.test.mjs testing/legacy.test.mjs`
   - browsers: `node testing/browser.mjs <file> [chromium|google-chrome-stable|firefox|webkit ...]` runs one test file in every installed browser, headless (WebKit = WebKitGTK MiniBrowser under `xvfb-run`). `browser.html` + `browser-shims.mjs` stand in for node:test/assert/fs/Buffer. Run it for `legacy.test.mjs`, `test.mjs` and `fallback.test.mjs`.
